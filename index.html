@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>3D Bounce Ball Adventure</title>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #87CEEB; /* 하늘색 배경 */
+            font-family: 'Jua', sans-serif;
+            touch-action: none; /* 모바일 터치 스크롤 방지 */
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+        }
+
+        /* UI 오버레이 */
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* UI 레이어 자체는 터치 통과 */
+            z-index: 10;
+        }
+
+        .header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: space-between;
+            color: white;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.3);
+            font-size: 24px;
+            pointer-events: none;
+        }
+
+        /* --- 모바일 컨트롤 영역 --- */
+        
+        /* 1. 이동 조이스틱 영역 (좌측 하단) */
+        #joystick-zone {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            width: 160px;
+            height: 160px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            pointer-events: auto; /* 터치 가능 */
+            display: none; /* JS에서 활성화 */
+            touch-action: none;
+        }
+
+        #joystick-knob {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            pointer-events: none;
+        }
+
+        /* 2. 카메라 조작 영역 (우측 전체) */
+        #camera-zone {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50%; /* 화면 오른쪽 절반 */
+            height: 100%;
+            pointer-events: auto; /* 터치 가능 */
+            display: none; /* JS에서 활성화 */
+            touch-action: none;
+            /* background: rgba(255, 0, 0, 0.1); 디버깅용 */
+        }
+
+        /* --- 메시지 화면 (최상단) --- */
+        #message-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+            z-index: 100; /* 가장 위에 배치 */
+            transition: opacity 0.3s;
+            pointer-events: auto;
+        }
+
+        h1 {
+            color: #fff;
+            font-size: 48px;
+            margin: 0;
+            text-shadow: 0 5px 0 #333;
+            letter-spacing: 2px;
+            text-align: center;
+        }
+
+        .level-text {
+            color: #ffeb3b;
+            font-size: 24px;
+            margin-bottom: 30px;
+        }
+
+        button {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 15px 50px;
+            font-size: 24px;
+            font-family: 'Jua', sans-serif;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #c0392b;
+            transition: transform 0.1s, box-shadow 0.1s;
+            pointer-events: auto; /* 명시적 클릭 허용 */
+        }
+
+        button:active {
+            transform: translateY(6px);
+            box-shadow: 0 0 0 #c0392b;
+        }
+
+        .hidden {
+            opacity: 0;
+            pointer-events: none !important;
+        }
+
+        #tutorial {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            color: white;
+            font-size: 16px;
+            text-shadow: 1px 1px 2px black;
+            opacity: 0.8;
+            pointer-events: none;
+            z-index: 5;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container"></div>
+
+    <div id="ui-layer">
+        <div class="header">
+            <div id="level-display">Level 1</div>
+            <div id="star-display">⭐ 0/3</div>
+        </div>
+        
+        <!-- 컨트롤러들 -->
+        <div id="joystick-zone">
+            <div id="joystick-knob"></div>
+        </div>
+        <div id="camera-zone"></div>
+
+        <div id="tutorial" class="hidden">
+            PC: WASD 이동 / 마우스 드래그 시점
+        </div>
+    </div>
+
+    <!-- 메뉴 화면 -->
+    <div id="message-screen">
+        <h1>BOUNCE<br>ADVENTURE</h1>
+        <div class="level-text" id="msg-sub">3D Platformer</div>
+        <button id="start-btn">GAME START</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // --- 게임 설정 ---
+        const CONFIG = {
+            gravity: 0.015,       // 중력
+            bounceForce: 0.35,    // 기본 점프력
+            highBounceForce: 0.6, // 점프대 점프력
+            moveSpeed: 0.12,      // 이동 속도
+            ballRadius: 0.4,
+            shadowMapSize: 1024
+        };
+
+        // --- 전역 변수 ---
+        let scene, camera, renderer;
+        let ball, ballShadow;
+        let platforms = [];
+        let stars = [];
+        let goal;
+        
+        // 상태
+        let currentLevel = 1;
+        let isPlaying = false;
+        let starCount = 0;
+        let maxStars = 0;
+        
+        // 물리
+        let velocity = new THREE.Vector3(0, 0, 0);
+        
+        // 입력
+        let input = { x: 0, z: 0 };
+        
+        // 카메라 상태
+        let cameraState = {
+            yaw: 0,          // 좌우 회전
+            pitch: 0.6,      // 상하 회전
+            dist: 10
+        };
+
+        // DOM 요소
+        const uiLevel = document.getElementById('level-display');
+        const uiStars = document.getElementById('star-display');
+        const msgScreen = document.getElementById('message-screen');
+        const startBtn = document.getElementById('start-btn');
+        const msgTitle = document.querySelector('#message-screen h1');
+        const msgSub = document.getElementById('msg-sub');
+        const tutorial = document.getElementById('tutorial');
+        
+        const joystickZone = document.getElementById('joystick-zone');
+        const joystickKnob = document.getElementById('joystick-knob');
+        const cameraZone = document.getElementById('camera-zone');
+
+        // --- 레벨 데이터 ---
+        const LEVELS = {
+            1: [
+                "...........",
+                "...###.....",
+                "..#...#....",
+                ".S..*..G...",
+                "..#...#....",
+                "...###.....",
+                "..........."
+            ],
+            2: [
+                ".....G.....",
+                ".....#.....",
+                "....###....",
+                "...#.*.#...",
+                "..#..^..#..",
+                ".S...#.....",
+                ".....#....."
+            ],
+            3: [
+                "G...###...*",
+                "#...#.#...#",
+                "#...#.#...#",
+                "##^##.##^##",
+                "...........",
+                ".....S.....",
+                ".....#....."
+            ],
+            4: [
+                ".....G.....",
+                "....###....",
+                "...X...X...",
+                "..#..^..#..",
+                ".#...*...#.",
+                "..#..S..#..",
+                "...#####..."
+            ]
+        };
+
+        // --- 초기화 ---
+        function init() {
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87CEEB);
+            scene.fog = new THREE.Fog(0x87CEEB, 10, 50);
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+            
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.getElementById('game-container').appendChild(renderer.domElement);
+
+            // Light
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(10, 20, 10);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = CONFIG.shadowMapSize;
+            dirLight.shadow.mapSize.height = CONFIG.shadowMapSize;
+            dirLight.shadow.camera.left = -20;
+            dirLight.shadow.camera.right = 20;
+            dirLight.shadow.camera.top = 20;
+            dirLight.shadow.camera.bottom = -20;
+            scene.add(dirLight);
+
+            createBall();
+
+            // 리스너 등록
+            window.addEventListener('resize', onWindowResize);
+            startBtn.addEventListener('click', startGame); // 클릭 이벤트 명시적 연결
+            
+            setupInputs();
+
+            // 모바일 감지 및 UI 설정
+            const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            if (isMobile) {
+                joystickZone.style.display = 'block';
+                cameraZone.style.display = 'block';
+                tutorial.innerHTML = "좌측 하단: 이동<br>우측 화면: 시점 회전";
+            }
+            tutorial.classList.remove('hidden');
+
+            // 렌더링 시작
+            animate();
+        }
+
+        function createBall() {
+            const geometry = new THREE.SphereGeometry(CONFIG.ballRadius, 32, 32);
+            const material = new THREE.MeshPhongMaterial({ color: 0xFF4500 });
+            ball = new THREE.Mesh(geometry, material);
+            ball.castShadow = true;
+            scene.add(ball);
+
+            // 그림자
+            const shadowGeo = new THREE.CircleGeometry(CONFIG.ballRadius, 16);
+            const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.3 });
+            ballShadow = new THREE.Mesh(shadowGeo, shadowMat);
+            ballShadow.rotation.x = -Math.PI / 2;
+            scene.add(ballShadow);
+        }
+
+        // --- 레벨 로드 ---
+        function loadLevel(levelNum) {
+            // 이전 객체 정리
+            platforms.forEach(p => scene.remove(p));
+            stars.forEach(s => scene.remove(s));
+            if (goal) scene.remove(goal);
+            
+            platforms = [];
+            stars = [];
+            starCount = 0;
+            maxStars = 0;
+            velocity.set(0, 0, 0); // 속도 초기화
+            input.x = 0; input.z = 0; // 입력 초기화
+
+            // 카메라 리셋
+            cameraState.yaw = 0; 
+            
+            const mapData = LEVELS[levelNum] || LEVELS[1];
+            const rows = mapData.length;
+            const cols = mapData[0].length;
+            const tileSize = 1.2;
+            const offsetX = (cols * tileSize) / 2;
+            const offsetZ = (rows * tileSize) / 2;
+
+            for (let z = 0; z < rows; z++) {
+                for (let x = 0; x < cols; x++) {
+                    const char = mapData[z][x];
+                    const posX = x * tileSize - offsetX;
+                    const posZ = z * tileSize - offsetZ;
+
+                    if (char === '.') continue;
+
+                    if (['#', 'S', '*', 'G', '^', 'X'].includes(char)) {
+                        let color = 0x4CAF50;
+                        let type = 'normal';
+                        if (char === '^') { color = 0x2196F3; type = 'jump'; }
+                        if (char === 'X') { color = 0xF44336; type = 'trap'; }
+
+                        const geo = new THREE.BoxGeometry(tileSize, 0.5, tileSize);
+                        const mat = new THREE.MeshLambertMaterial({ color: color });
+                        const mesh = new THREE.Mesh(geo, mat);
+                        mesh.position.set(posX, -0.25, posZ);
+                        mesh.receiveShadow = true;
+                        mesh.userData = { type: type };
+                        scene.add(mesh);
+                        platforms.push(mesh);
+                    }
+
+                    if (char === 'S') {
+                        ball.position.set(posX, 2, posZ); // 시작 위치
+                    } else if (char === '*') {
+                        createStar(posX, posZ);
+                    } else if (char === 'G') {
+                        createGoal(posX, posZ);
+                    }
+                }
+            }
+            uiLevel.innerText = `Level ${levelNum}`;
+            updateStarUI();
+        }
+
+        function createStar(x, z) {
+            const geo = new THREE.OctahedronGeometry(0.3);
+            const mat = new THREE.MeshPhongMaterial({ color: 0xFFD700, emissive: 0xFFAA00, emissiveIntensity: 0.5 });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(x, 0.5, z);
+            mesh.userData = { active: true };
+            mesh.castShadow = true;
+            scene.add(mesh);
+            stars.push(mesh);
+            maxStars++;
+        }
+
+        function createGoal(x, z) {
+            const geo = new THREE.CylinderGeometry(0, 0.5, 1, 4);
+            const mat = new THREE.MeshPhongMaterial({ color: 0xE91E63, transparent: true, opacity: 0.8 });
+            goal = new THREE.Mesh(geo, mat);
+            goal.position.set(x, 0.5, z);
+            scene.add(goal);
+        }
+
+        // --- 입력 처리 (핵심 수정 부분) ---
+        function setupInputs() {
+            // 1. PC 키보드
+            document.addEventListener('keydown', (e) => {
+                if (!isPlaying) return;
+                switch(e.key) {
+                    case 'ArrowUp': case 'w': input.z = -1; break;
+                    case 'ArrowDown': case 's': input.z = 1; break;
+                    case 'ArrowLeft': case 'a': input.x = -1; break;
+                    case 'ArrowRight': case 'd': input.x = 1; break;
+                }
+            });
+            document.addEventListener('keyup', (e) => {
+                switch(e.key) {
+                    case 'ArrowUp': case 'w': case 'ArrowDown': case 's': input.z = 0; break;
+                    case 'ArrowLeft': case 'a': case 'ArrowRight': case 'd': input.x = 0; break;
+                }
+            });
+
+            // 2. PC 마우스 드래그 (시점)
+            let isMouseDown = false;
+            let lastMouseX = 0, lastMouseY = 0;
+            
+            document.addEventListener('mousedown', (e) => {
+                if (!isPlaying || e.target.tagName === 'BUTTON') return;
+                isMouseDown = true;
+                lastMouseX = e.clientX;
+                lastMouseY = e.clientY;
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (isMouseDown) {
+                    rotateCamera(e.clientX - lastMouseX, e.clientY - lastMouseY);
+                    lastMouseX = e.clientX;
+                    lastMouseY = e.clientY;
+                }
+            });
+            
+            document.addEventListener('mouseup', () => isMouseDown = false);
+
+            // 3. 모바일 조이스틱 (Touch) - joystickZone에만 이벤트 리스너 추가
+            let joystickId = null;
+
+            joystickZone.addEventListener('touchstart', (e) => {
+                e.preventDefault(); // 기본 동작 방지
+                if (!isPlaying) return;
+                
+                const t = e.changedTouches[0];
+                joystickId = t.identifier;
+                updateJoystick(t);
+            }, { passive: false });
+
+            joystickZone.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (!isPlaying) return;
+
+                for(let i=0; i<e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === joystickId) {
+                        updateJoystick(e.changedTouches[i]);
+                        break;
+                    }
+                }
+            }, { passive: false });
+
+            joystickZone.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                input.x = 0;
+                input.z = 0;
+                joystickKnob.style.transform = `translate(-50%, -50%)`;
+                joystickId = null;
+            });
+
+            // 4. 모바일 카메라 (Touch) - cameraZone에만 이벤트 리스너 추가
+            let lastTouchX = 0, lastTouchY = 0;
+
+            cameraZone.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (!isPlaying) return;
+                const t = e.changedTouches[0];
+                lastTouchX = t.clientX;
+                lastTouchY = t.clientY;
+            }, { passive: false });
+
+            cameraZone.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (!isPlaying) return;
+                const t = e.changedTouches[0];
+                const dx = t.clientX - lastTouchX;
+                const dy = t.clientY - lastTouchY;
+                rotateCamera(dx * 1.5, dy * 1.5); // 감도 조절
+                lastTouchX = t.clientX;
+                lastTouchY = t.clientY;
+            }, { passive: false });
+        }
+
+        function updateJoystick(touch) {
+            const rect = joystickZone.getBoundingClientRect();
+            let dx = (touch.clientX - rect.left) - rect.width/2;
+            let dy = (touch.clientY - rect.top) - rect.height/2;
+            
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            const maxDist = 50;
+            if (dist > maxDist) {
+                const angle = Math.atan2(dy, dx);
+                dx = Math.cos(angle) * maxDist;
+                dy = Math.sin(angle) * maxDist;
+            }
+
+            joystickKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+            input.x = dx / maxDist;
+            input.z = dy / maxDist;
+        }
+
+        function rotateCamera(dx, dy) {
+            const sensitivity = 0.005;
+            cameraState.yaw -= dx * sensitivity;
+            // 상하 각도 제한 (너무 위나 아래로 가지 않게)
+            cameraState.pitch = Math.max(0.1, Math.min(Math.PI / 2 - 0.1, cameraState.pitch + dy * sensitivity));
+        }
+
+        // --- 게임 로직 ---
+
+        function startGame() {
+            console.log("Game Starting...");
+            msgScreen.classList.add('hidden');
+            isPlaying = true;
+            loadLevel(currentLevel);
+        }
+
+        function updatePhysics() {
+            // 중력
+            velocity.y -= CONFIG.gravity;
+            ball.position.add(velocity);
+
+            // 입력에 따른 이동 (카메라 기준)
+            const camAngle = cameraState.yaw;
+            const targetVX = (input.x * Math.cos(camAngle) + input.z * Math.sin(camAngle)) * CONFIG.moveSpeed;
+            const targetVZ = (input.x * -Math.sin(camAngle) + input.z * Math.cos(camAngle)) * CONFIG.moveSpeed;
+
+            velocity.x += (targetVX - velocity.x) * 0.1;
+            velocity.z += (targetVZ - velocity.z) * 0.1;
+
+            // 바닥 충돌 체크
+            const raycaster = new THREE.Raycaster();
+            raycaster.set(ball.position, new THREE.Vector3(0, -1, 0));
+            const intersects = raycaster.intersectObjects(platforms);
+
+            let shadowY = -10;
+            if (intersects.length > 0) {
+                const hit = intersects[0];
+                shadowY = hit.point.y + 0.02;
+
+                if (hit.distance < CONFIG.ballRadius && velocity.y < 0) {
+                    const type = hit.object.userData.type;
+                    
+                    if (type === 'trap') {
+                        gameOver();
+                        return;
+                    }
+                    
+                    velocity.y = (type === 'jump') ? CONFIG.highBounceForce : CONFIG.bounceForce;
+                    squashBall();
+                    ball.position.y = hit.point.y + CONFIG.ballRadius;
+                }
+            }
+
+            // 그림자 업데이트
+            ballShadow.position.set(ball.position.x, shadowY, ball.position.z);
+            ballShadow.visible = shadowY > -5;
+
+            // 낙사 체크
+            if (ball.position.y < -5) gameOver();
+
+            // 별 획득
+            for (let i = stars.length - 1; i >= 0; i--) {
+                const s = stars[i];
+                s.rotation.y += 0.05;
+                if (ball.position.distanceTo(s.position) < 0.6) {
+                    scene.remove(s);
+                    stars.splice(i, 1);
+                    starCount++;
+                    updateStarUI();
+                }
+            }
+
+            // 골인 체크
+            if (goal && ball.position.distanceTo(goal.position) < 0.6) {
+                nextLevel();
+            }
+
+            // 공 회전
+            ball.rotation.x -= velocity.z * 1.5;
+            ball.rotation.z += velocity.x * 1.5;
+        }
+
+        function updateCamera() {
+            if (!ball) return;
+            // 구면 좌표계로 카메라 위치 계산
+            const cx = ball.position.x + cameraState.dist * Math.cos(cameraState.pitch) * Math.sin(cameraState.yaw);
+            const cz = ball.position.z + cameraState.dist * Math.cos(cameraState.pitch) * Math.cos(cameraState.yaw);
+            const cy = ball.position.y + cameraState.dist * Math.sin(cameraState.pitch);
+
+            camera.position.set(cx, cy, cz);
+            camera.lookAt(ball.position);
+        }
+
+        function squashBall() {
+            ball.scale.set(1.3, 0.7, 1.3);
+            setTimeout(() => ball.scale.set(1, 1, 1), 100);
+        }
+
+        function nextLevel() {
+            isPlaying = false;
+            currentLevel++;
+            if (!LEVELS[currentLevel]) {
+                msgTitle.innerText = "ALL CLEAR!";
+                msgSub.innerText = "Congratulations!";
+                startBtn.innerText = "Replay";
+                currentLevel = 1;
+            } else {
+                msgTitle.innerText = "LEVEL CLEAR!";
+                msgSub.innerText = "Great Job!";
+                startBtn.innerText = "Next Level";
+            }
+            msgScreen.classList.remove('hidden');
+        }
+
+        function gameOver() {
+            isPlaying = false;
+            msgTitle.innerText = "GAME OVER";
+            msgSub.innerText = "Try Again?";
+            startBtn.innerText = "Retry";
+            msgScreen.classList.remove('hidden');
+        }
+
+        function updateStarUI() {
+            uiStars.innerText = `⭐ ${starCount}/${maxStars}`;
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (isPlaying) {
+                updatePhysics();
+                updateCamera();
+            } else {
+                // 대기 화면 애니메이션
+                if (ball) {
+                    ball.position.y = 1 + Math.sin(Date.now() * 0.003) * 0.5;
+                    ball.rotation.y += 0.01;
+                    cameraState.yaw += 0.001; // 대기 중 자동 회전
+                    updateCamera();
+                }
+            }
+            renderer.render(scene, camera);
+        }
+
+        // 실행
+        init();
+
+    </script>
+</body>
+</html>
