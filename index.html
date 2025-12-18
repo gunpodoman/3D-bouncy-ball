@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>Bounce Ball RPG: Final Cut</title>
+    <title>Bounce Ball RPG: The Legend</title>
     <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Do+Hyeon&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -18,14 +18,13 @@
 
         #game-container { width: 100vw; height: 100vh; display: block; }
 
-        /* UI 레이어 */
+        /* --- UI --- */
         #ui-layer {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none; z-index: 10; transition: opacity 0.5s;
         }
         body.cinematic #ui-layer { opacity: 0; }
 
-        /* 레터박스 */
         .letterbox {
             position: absolute; left: 0; width: 100%; height: 0;
             background: black; z-index: 20; transition: height 0.5s ease;
@@ -34,10 +33,9 @@
         .letterbox.bottom { bottom: 0; }
         body.cinematic .letterbox { height: 12%; }
 
-        /* HUD */
         .hud-panel {
             position: absolute; top: 20px; left: 20px;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.7);
             padding: 10px 20px; border-radius: 15px;
             border: 2px solid #fff;
             color: #fff; font-family: 'Do Hyeon', sans-serif; font-size: 18px;
@@ -46,25 +44,26 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
 
-        /* 퀘스트 */
         .quest-panel {
             position: absolute; top: 20px; right: 20px;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.7);
             padding: 15px; border-radius: 10px;
             border-left: 5px solid #f39c12;
-            color: #fff; font-size: 14px; width: 220px;
+            color: #fff; font-size: 15px; width: 240px;
             text-shadow: 1px 1px 0 #000;
+            line-height: 1.4;
         }
-        .quest-title { color: #f39c12; font-weight: bold; margin-bottom: 5px; font-size: 16px; }
+        .quest-title { color: #f39c12; font-weight: bold; margin-bottom: 5px; font-size: 18px; font-family: 'Black Han Sans', sans-serif; }
 
-        /* 조이스틱 */
+        /* 조이스틱 스타일 수정 (transform 제거) */
         #joystick-zone {
-            position: absolute; bottom: 40px; left: 40px;
+            position: absolute; 
             width: 140px; height: 140px;
-            background: rgba(255, 255, 255, 0.15);
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
             border-radius: 50%;
             pointer-events: auto; display: none;
+            /* transform: translate(-50%, -50%); 제거 -> JS에서 직접 좌표 계산 */
         }
         #joystick-knob {
             position: absolute; top: 50%; left: 50%;
@@ -75,68 +74,70 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
 
-        /* 상호작용 버튼 */
         #btn-interact {
             position: absolute; bottom: 50px; right: 50px;
-            width: 80px; height: 80px;
-            background: radial-gradient(circle, #f1c40f, #f39c12);
-            border: 3px solid #fff; border-radius: 50%;
+            width: 90px; height: 90px;
+            background: radial-gradient(circle, #f1c40f, #e67e22);
+            border: 4px solid #fff; border-radius: 50%;
             display: flex; justify-content: center; align-items: center;
             box-shadow: 0 0 20px rgba(243, 156, 18, 0.6);
             transform: scale(0); transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
             pointer-events: auto; cursor: pointer; z-index: 50;
         }
         #btn-interact.visible { transform: scale(1); }
-        #btn-interact::after { content: 'TALK'; font-weight: bold; color: #fff; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+        #btn-interact::after { content: 'TALK'; font-weight: bold; font-size: 18px; color: #fff; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
         #btn-interact.shop::after { content: 'SHOP'; }
 
         /* 대화창 */
         #dialogue-box {
-            position: absolute; bottom: -250px; left: 50%; transform: translateX(-50%);
-            width: 80%; max-width: 800px; height: 160px;
+            position: absolute; bottom: -300px; left: 50%; transform: translateX(-50%);
+            width: 80%; max-width: 800px; height: 180px;
             background: rgba(20, 20, 20, 0.95);
-            border: 2px solid #fff; border-radius: 15px;
+            border: 3px solid #fff; border-radius: 15px;
             padding: 25px; box-sizing: border-box;
             color: #fff; z-index: 30;
-            transition: bottom 0.5s ease;
+            transition: bottom 0.4s ease;
             display: flex; flex-direction: column;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            pointer-events: auto; cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
         }
-        body.cinematic #dialogue-box { bottom: 60px; }
-        .npc-name { color: #f1c40f; font-weight: bold; font-size: 22px; margin-bottom: 10px; }
-        .dialogue-text { font-size: 19px; line-height: 1.6; }
+        body.cinematic #dialogue-box { bottom: 50px; }
+        .npc-name { color: #f1c40f; font-weight: bold; font-size: 24px; margin-bottom: 10px; font-family: 'Do Hyeon', sans-serif; }
+        .dialogue-text { font-size: 20px; line-height: 1.6; }
         .dialogue-next { align-self: flex-end; color: #aaa; font-size: 14px; margin-top: auto; animation: blink 1s infinite; }
 
-        /* 상점 모달 */
+        /* 상점 */
         .modal-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); display: none; z-index: 100;
+            background: rgba(0,0,0,0.8); display: none; z-index: 100;
             justify-content: center; align-items: center; pointer-events: auto;
             backdrop-filter: blur(5px);
         }
         .shop-content {
-            background: #fff; width: 400px; border-radius: 15px; padding: 25px;
+            background: #fff; width: 450px; border-radius: 15px; padding: 30px;
             box-shadow: 0 20px 50px rgba(0,0,0,0.5); font-family: 'Do Hyeon', sans-serif;
             text-align: center; border: 4px solid #333;
         }
         .shop-item {
-            background: #f9f9f9; margin: 12px 0; padding: 15px; border-radius: 10px;
+            background: #f0f0f0; margin: 15px 0; padding: 15px; border-radius: 10px;
             display: flex; justify-content: space-between; align-items: center;
-            border: 1px solid #ddd;
+            border: 1px solid #ccc;
         }
+        .shop-desc { text-align: left; font-size: 18px; }
+        .shop-desc small { color: #666; font-size: 14px; display: block; margin-top: 4px; }
+        
         .shop-btn {
-            background: #27ae60; color: white; border: none; padding: 8px 16px;
-            border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 16px;
+            background: #27ae60; color: white; border: none; padding: 10px 20px;
+            border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 18px;
+            transition: background 0.2s;
         }
         .shop-btn:hover { background: #219150; }
+        .shop-btn:active { transform: scale(0.95); }
 
-        /* 토스트 */
         #toast {
-            position: absolute; top: 20%; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.8); color: #f1c40f; padding: 12px 30px;
+            position: absolute; top: 15%; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.9); color: #f1c40f; padding: 12px 30px;
             border-radius: 30px; font-weight: bold; opacity: 0; transition: opacity 0.5s;
-            pointer-events: none; font-size: 20px; z-index: 60;
+            pointer-events: none; font-size: 20px; z-index: 60; border: 1px solid #f1c40f;
         }
 
         @keyframes blink { 50% { opacity: 0; } }
@@ -156,13 +157,12 @@
         <div class="hud-panel">
             <span>🪵 <span id="res-wood">0</span></span>
             <span>🪨 <span id="res-stone">0</span></span>
-            <span>💎 <span id="res-gem">0</span></span>
             <span style="color:#f1c40f">💰 <span id="res-gold">0</span></span>
         </div>
 
         <div class="quest-panel">
-            <div class="quest-title">📜 QUEST</div>
-            <div id="quest-desc">촌장님과 대화하여 모험을 시작하세요.</div>
+            <div class="quest-title">📜 현재 목표</div>
+            <div id="quest-desc">촌장님과 대화하여<br>모험을 시작하세요.</div>
         </div>
 
         <div id="joystick-zone"><div id="joystick-knob"></div></div>
@@ -173,43 +173,42 @@
         <div id="touch-camera"></div>
     </div>
 
+    <!-- 대화창 -->
     <div id="dialogue-box">
         <div class="npc-name" id="dial-name">Name</div>
         <div class="dialogue-text" id="dial-text">...</div>
         <div class="dialogue-next">터치하여 계속 ▶</div>
     </div>
 
+    <!-- 상점 UI -->
     <div id="shop-modal" class="modal-overlay">
         <div class="shop-content">
-            <h2 style="margin-top:0; color:#e67e22;">🛒 모험가 상점</h2>
+            <h2 style="margin-top:0; color:#e67e22; font-size: 32px;">🛒 모험가 상점</h2>
+            
             <div class="shop-item">
-                <div style="text-align:left">
-                    <strong>자원 판매</strong><br>
-                    <small>나무/돌/보석 5개 → 50G</small>
+                <div class="shop-desc">
+                    <strong>자원 판매</strong>
+                    <small>나무/돌 5개씩 → 50 Gold</small>
                 </div>
                 <button class="shop-btn" onclick="game.shopSell()">판매</button>
             </div>
+
             <div class="shop-item">
-                <div style="text-align:left">
-                    <strong>점프력 강화</strong> (200G)<br>
-                    <small>높은 곳에 갈 수 있습니다.</small>
+                <div class="shop-desc">
+                    <strong>점프력 강화</strong> (200 Gold)
+                    <small>높은 곳에 닿을 수 있습니다.</small>
                 </div>
-                <button class="shop-btn" onclick="game.shopUpgradeJump()">강화</button>
+                <button class="shop-btn" style="background:#e74c3c" onclick="game.shopUpgrade()">강화</button>
             </div>
-            <div class="shop-item">
-                <div style="text-align:left">
-                    <strong>이동속도 강화</strong> (100G)<br>
-                    <small>파쿠르가 쉬워집니다.</small>
-                </div>
-                <button class="shop-btn" onclick="game.shopUpgradeSpeed()">강화</button>
-            </div>
-            <button class="shop-btn" style="background:#7f8c8d; width:100%; margin-top:10px;" onclick="game.closeShop()">나가기</button>
+
+            <button class="shop-btn" style="background:#7f8c8d; width:100%; margin-top:10px;" onclick="game.closeShop()">상점 닫기</button>
         </div>
     </div>
 
+    <!-- 엔딩 화면 -->
     <div id="ending-screen" class="modal-overlay" style="background:black;">
         <div style="color:white; text-align:center;">
-            <h1 style="color:#f1c40f; font-size:60px; margin-bottom:20px;">THE END</h1>
+            <h1 style="color:#f1c40f; font-size:60px; margin-bottom:20px; font-family:'Black Han Sans';">THE END</h1>
             <p style="font-size:24px;">전설의 용사여, 마왕을 물리치고 세계를 구했습니다!</p>
             <br><br>
             <button class="shop-btn" style="padding:15px 40px; font-size:20px;" onclick="location.reload()">처음부터 다시 하기</button>
@@ -221,56 +220,58 @@
     <script>
         class Game {
             constructor() {
+                // 게임 밸런스 설정
                 this.config = {
                     gravity: 0.018,
-                    bounceForce: 0.40,
+                    baseBounce: 0.40,
                     moveSpeed: 0.14,
                     ballRadius: 0.45
                 };
                 
-                this.stats = { jumpLevel: 1, speedLevel: 1 };
-                this.resources = { wood: 0, stone: 0, gem: 0, gold: 0 };
+                // 플레이어 데이터
+                this.stats = { jumpLevel: 0 };
+                this.resources = { wood: 0, stone: 0, gold: 0 };
                 this.questState = 0; 
                 
+                // Three.js
                 this.scene = null; this.camera = null; this.renderer = null;
                 this.ball = null; this.ballShadow = null;
                 
                 this.colliders = [];
                 this.interactables = [];
-                this.movingPlatforms = [];
                 this.textures = {}; 
                 
                 this.velocity = new THREE.Vector3(0, 0, 0);
                 this.input = { x: 0, z: 0 };
-                this.cameraState = { yaw: 0, pitch: 0.5, dist: 14 };
+                this.cameraState = { yaw: 0, pitch: 0.6, dist: 14 };
                 
                 this.activeNPC = null;
                 this.inCutscene = false;
-                this.dialogueTimer = null; // 대화 타이머 전역 관리
+                this.typingTimer = null;
 
-                this.els = {
+                // UI Elements
+                this.ui = {
                     wood: document.getElementById('res-wood'),
                     stone: document.getElementById('res-stone'),
-                    gem: document.getElementById('res-gem'),
                     gold: document.getElementById('res-gold'),
                     quest: document.getElementById('quest-desc'),
                     toast: document.getElementById('toast'),
                     interactBtn: document.getElementById('btn-interact'),
                     dialogueBox: document.getElementById('dialogue-box'),
                     dialName: document.getElementById('dial-name'),
-                    dialText: document.getElementById('dial-text'),
-                    joystickZone: document.getElementById('joystick-zone'),
-                    joystickKnob: document.getElementById('joystick-knob')
+                    dialText: document.getElementById('dial-text')
                 };
 
                 this.init();
             }
 
             init() {
+                // 1. Scene
                 this.scene = new THREE.Scene();
                 this.scene.background = new THREE.Color(0x87CEEB);
                 this.scene.fog = new THREE.Fog(0x87CEEB, 20, 150);
 
+                // 2. Camera
                 this.camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 500);
                 this.renderer = new THREE.WebGLRenderer({ antialias: true });
                 this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -278,6 +279,7 @@
                 this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
                 document.getElementById('game-container').appendChild(this.renderer.domElement);
 
+                // 3. Light
                 const ambient = new THREE.AmbientLight(0xffffff, 0.6);
                 this.scene.add(ambient);
                 const sun = new THREE.DirectionalLight(0xffffff, 0.8);
@@ -285,64 +287,62 @@
                 sun.castShadow = true;
                 sun.shadow.mapSize.width = 4096;
                 sun.shadow.mapSize.height = 4096;
-                sun.shadow.camera.left = -100; sun.shadow.camera.right = 100;
-                sun.shadow.camera.top = 100; sun.shadow.camera.bottom = -100;
                 this.scene.add(sun);
 
+                // 4. World Build
                 this.generateTextures();
                 this.createPlayer();
-                this.buildLevel();
+                this.buildWorld(); // 맵 생성
                 this.setupInputs();
 
+                // 5. Intro
                 this.startCutscene([
-                    { name: "내레이션", text: "평화롭던 바운스 월드에 어둠이 찾아왔습니다." },
-                    { name: "내레이션", text: "마왕이 북쪽 하늘섬을 점령하고 세계를 위협하고 있습니다." },
-                    { name: "시스템", text: "마을 촌장님을 만나 모험을 시작하세요." }
+                    { name: "시스템", text: "바운스 월드에 오신 것을 환영합니다." },
+                    { name: "시스템", text: "마을 중앙에 있는 촌장님을 만나 퀘스트를 받으세요." }
                 ]);
 
                 this.animate();
                 window.addEventListener('resize', () => this.onResize());
             }
 
+            // --- 텍스처 생성 (Procedural) ---
             generateTextures() {
                 this.textures.grass = this.createTexture('#4CAF50', '#388E3C', 'noise');
                 this.textures.stone = this.createTexture('#9E9E9E', '#757575', 'noise');
                 this.textures.wood = this.createTexture('#8D6E63', '#5D4037', 'lines');
-                this.textures.dirt = this.createTexture('#795548', '#5D4037', 'noise');
-                this.textures.lava = this.createTexture('#F44336', '#B71C1C', 'noise');
+                this.textures.lava = this.createTexture('#E74C3C', '#C0392B', 'noise');
             }
 
-            createTexture(color1, color2, type) {
-                const canvas = document.createElement('canvas');
-                canvas.width = 256; canvas.height = 256;
-                const ctx = canvas.getContext('2d');
-                ctx.fillStyle = color1; ctx.fillRect(0, 0, 256, 256);
-                
-                if (type === 'noise') {
-                    for(let i=0; i<3000; i++) {
-                        ctx.fillStyle = color2;
-                        const x = Math.random() * 256; const y = Math.random() * 256;
-                        const s = Math.random() * 4; ctx.fillRect(x, y, s, s);
+            createTexture(c1, c2, type) {
+                const cvs = document.createElement('canvas');
+                cvs.width = 128; cvs.height = 128;
+                const ctx = cvs.getContext('2d');
+                ctx.fillStyle = c1; ctx.fillRect(0,0,128,128);
+                if(type === 'noise') {
+                    for(let i=0; i<1000; i++) {
+                        ctx.fillStyle = c2;
+                        ctx.fillRect(Math.random()*128, Math.random()*128, 2, 2);
                     }
-                } else if (type === 'lines') {
-                    ctx.strokeStyle = color2; ctx.lineWidth = 2;
-                    for(let i=0; i<20; i++) {
+                } else {
+                    ctx.strokeStyle = c2; ctx.lineWidth = 2;
+                    for(let i=0; i<10; i++) {
                         ctx.beginPath();
-                        const y = Math.random() * 256;
-                        ctx.moveTo(0, y); ctx.lineTo(256, y + (Math.random()-0.5)*20);
+                        ctx.moveTo(0, Math.random()*128);
+                        ctx.lineTo(128, Math.random()*128);
                         ctx.stroke();
                     }
                 }
-                const tex = new THREE.CanvasTexture(canvas);
+                const tex = new THREE.CanvasTexture(cvs);
                 tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
                 return tex;
             }
 
+            // --- 플레이어 ---
             createPlayer() {
                 const geo = new THREE.SphereGeometry(this.config.ballRadius, 32, 32);
-                const mat = new THREE.MeshPhongMaterial({ color: 0xe74c3c, shininess: 80 });
+                const mat = new THREE.MeshPhongMaterial({ color: 0xFF5722, shininess: 80 });
                 this.ball = new THREE.Mesh(geo, mat);
-                this.ball.position.set(0, 2, 0);
+                this.ball.position.set(0, 5, 0);
                 this.ball.castShadow = true;
                 this.scene.add(this.ball);
 
@@ -353,84 +353,90 @@
                 this.scene.add(this.ballShadow);
             }
 
-            buildLevel() {
-                this.createPlatform(0, 0, 0, 30, 30, 'grass', 'cylinder');
+            // --- 레벨 디자인 (맵 분리) ---
+            buildWorld() {
+                // 1. 시작 마을 (Z: 0)
+                this.createPlatform(0, 0, 0, 30, 30, 'grass'); 
                 this.createHouse(8, 0, 5, 0xf1c40f);
                 this.createHouse(-8, 0, 8, 0xe67e22);
                 this.createNPC(5, 0, 5, 'chief', '촌장', 0x3498db);
                 this.createNPC(-5, 0, 8, 'shop', '상인', 0x9b59b6);
-                this.scatterResources(0, 0, 0, 13, 'wood', 6);
-                this.scatterResources(0, 0, 0, 13, 'stone', 4);
-
-                this.createBridge(0, 0.05, -18, 5);
-                this.createPlatform(0, 0, -50, 20, 20, 'grass', 'cylinder');
-                this.createPlatform(10, 3, -50, 6, 6, 'dirt');
-                this.createPlatform(0, 6, -60, 6, 6, 'dirt');
-                this.createPlatform(-10, 9, -50, 6, 6, 'dirt');
-                this.createPlatform(0, 12, -40, 6, 6, 'dirt');
                 
-                this.createResource(10, 3, -50, 'wood');
-                this.createResource(-10, 9, -50, 'gem');
+                // 마을 자원
+                for(let i=0; i<5; i++) {
+                    this.createResource((Math.random()-0.5)*20, 0, (Math.random()-0.5)*20, 'wood');
+                    this.createResource((Math.random()-0.5)*20, 0, (Math.random()-0.5)*20, 'stone');
+                }
 
-                this.createMovingPlatform(0, 12, -25, 4, 0, 0, 10, 'z');
-                this.createMovingPlatform(0, 12, -5, 3, 0, 0, 8, 'x');
+                // 2. 다리 (마을 -> 숲) (Z: -30 ~ -80)
+                // 다리 간격 좁힘 (i * 5) -> 쉽게 건널 수 있음
+                this.createBridge(0, 0, -30, 10); 
+
+                // 3. 숲 (Z: -100)
+                this.createPlatform(0, 0, -100, 25, 25, 'grass');
+                this.createResource(0, 0, -100, 'wood'); // 중앙 나무
+                for(let i=0; i<8; i++) {
+                    const x = (Math.random()-0.5)*20; 
+                    const z = -100 + (Math.random()-0.5)*20;
+                    this.createResource(x, 0, z, Math.random()>0.5 ? 'wood':'stone');
+                }
                 
-                this.createPlatform(0, 15, 10, 3, 3, 'stone');
-                this.createBridge(0, 15.05, 20, 3);
-                this.createPlatform(0, 15, 45, 25, 25, 'stone', 'cylinder');
-                this.createNPC(0, 15, 45, 'boss', '마왕', 0xe74c3c);
-                this.createLava(0, 15, 45);
+                // 숲의 높은 지형 (파쿠르)
+                this.createPlatform(10, 4, -100, 5, 5, 'stone');
+                this.createPlatform(-10, 8, -100, 5, 5, 'stone');
+                this.createPlatform(0, 12, -110, 5, 5, 'stone');
 
+                // 4. 다리 (숲 -> 마왕성) (Z: -130 ~ -180)
+                this.createPlatform(0, 12, -130, 3, 3, 'stone');
+                this.createPlatform(0, 12, -150, 3, 3, 'stone');
+                this.createPlatform(0, 12, -170, 3, 3, 'stone');
+
+                // 5. 마왕성 (Z: -200)
+                this.createPlatform(0, 12, -200, 20, 20, 'stone');
+                this.createNPC(0, 12, -200, 'boss', '마왕', 0xe74c3c);
+                
+                // 용암 데코
+                for(let i=0; i<20; i++) {
+                    const m = new THREE.Mesh(new THREE.BoxGeometry(0.8,0.8,0.8), new THREE.MeshLambertMaterial({map:this.textures.lava}));
+                    m.position.set((Math.random()-0.5)*15, 12.5, -200+(Math.random()-0.5)*15);
+                    this.scene.add(m);
+                }
+
+                // 바다 (낙사)
                 const sea = new THREE.Mesh(
-                    new THREE.PlaneGeometry(500, 500),
+                    new THREE.PlaneGeometry(800, 800),
                     new THREE.MeshBasicMaterial({ color: 0x1E90FF, transparent:true, opacity:0.6 })
                 );
                 sea.rotation.x = -Math.PI/2; sea.position.y = -20;
                 this.scene.add(sea);
             }
 
-            createPlatform(x, y, z, w, d, texName, shape='box') {
-                const tex = this.textures[texName] || this.textures.grass;
+            createPlatform(x, y, z, w, d, texName) {
+                const tex = this.textures[texName];
                 const mat = new THREE.MeshLambertMaterial({ map: tex });
-                let mesh;
-                if(shape === 'cylinder') {
-                    mesh = new THREE.Mesh(new THREE.CylinderGeometry(w, w, 10, 32), mat);
-                    mesh.position.set(x, y - 5, z);
-                } else {
-                    mesh = new THREE.Mesh(new THREE.BoxGeometry(w, 1, d), mat);
-                    mesh.position.set(x, y - 0.5, z);
-                }
+                const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, 1, d), mat);
+                // 윗면이 y에 오도록 (y-0.5)
+                mesh.position.set(x, y - 0.5, z);
                 mesh.receiveShadow = true;
                 this.scene.add(mesh);
+                
                 const box = new THREE.Box3().setFromObject(mesh);
-                mesh.userData = { box, type: 'ground' };
+                mesh.userData = { type: 'ground', box: box };
                 this.colliders.push(mesh);
-                return mesh;
             }
 
-            createBridge(x, y, z, count) {
-                const tex = this.textures.wood;
-                const mat = new THREE.MeshLambertMaterial({ map: tex });
-                for(let i=0; i<count; i++) {
-                    const mesh = new THREE.Mesh(new THREE.BoxGeometry(3, 0.2, 3), mat);
-                    mesh.position.set(x, y, z - (i * 3.5));
+            createBridge(x, y, z, length) {
+                const mat = new THREE.MeshLambertMaterial({ map: this.textures.wood });
+                for(let i=0; i<length; i++) {
+                    const mesh = new THREE.Mesh(new THREE.BoxGeometry(3, 0.2, 4), mat);
+                    // 간격을 좁혀서 쉽게 만듦 (z spacing 5, length 4 = gap 1)
+                    mesh.position.set(x, y, z - (i * 5)); 
                     mesh.receiveShadow = true;
                     this.scene.add(mesh);
                     const box = new THREE.Box3().setFromObject(mesh);
-                    mesh.userData = { box, type: 'ground' };
+                    mesh.userData = { type: 'ground', box: box };
                     this.colliders.push(mesh);
                 }
-            }
-
-            createMovingPlatform(x, y, z, size, ox, oy, oz, axis) {
-                const mesh = this.createPlatform(x, y, z, size, size, 'stone');
-                mesh.material = new THREE.MeshLambertMaterial({ color: 0x3498db });
-                mesh.userData.isMoving = true;
-                mesh.userData.origin = { x, y: y-0.5, z };
-                mesh.userData.axis = axis;
-                mesh.userData.speed = 0.002 + Math.random()*0.001;
-                mesh.userData.range = 8;
-                this.movingPlatforms.push(mesh);
             }
 
             createHouse(x, y, z, color) {
@@ -438,10 +444,8 @@
                 base.position.set(x, y+1.5, z);
                 base.castShadow = true;
                 this.scene.add(base);
-                const box = new THREE.Box3().setFromObject(base);
-                base.userData = { box, type: 'ground' };
                 this.colliders.push(base);
-                const roof = new THREE.Mesh(new THREE.ConeGeometry(3.5, 2, 4), new THREE.MeshLambertMaterial({color:0xc0392b}));
+                const roof = new THREE.Mesh(new THREE.ConeGeometry(3.5, 2, 4), new THREE.MeshLambertMaterial({color:0x8B0000}));
                 roof.position.set(x, y+4, z); roof.rotation.y = Math.PI/4;
                 this.scene.add(roof);
             }
@@ -453,11 +457,15 @@
                 const head = new THREE.Mesh(new THREE.SphereGeometry(0.4), new THREE.MeshLambertMaterial({color:0xffe0bd}));
                 head.position.y = 1.6;
                 group.add(body); group.add(head);
-                if(id === 'boss') { group.scale.set(2, 2, 2); head.material.color.setHex(0x333333); }
-                group.position.set(x, y, z); group.castShadow = true;
+                if(id === 'boss') { group.scale.set(2, 2, 2); head.material.color.setHex(0x000000); }
+                
+                group.position.set(x, y, z); 
+                group.castShadow = true;
                 this.scene.add(group);
+                
                 group.userData = { type: 'npc', id, name };
                 this.interactables.push(group);
+                
                 const box = new THREE.Box3().setFromObject(group);
                 group.userData.box = box;
                 this.colliders.push(group);
@@ -466,122 +474,109 @@
             createResource(x, y, z, type) {
                 let mesh;
                 if(type === 'wood') {
-                    const g = new THREE.Group();
-                    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 1, 8), new THREE.MeshLambertMaterial({map: this.textures.wood}));
-                    trunk.position.y = 0.5;
-                    const leaf = new THREE.Mesh(new THREE.ConeGeometry(1, 2, 8), new THREE.MeshLambertMaterial({color:0x228B22}));
-                    leaf.position.y = 1.5;
-                    g.add(trunk); g.add(leaf); g.position.set(x, y, z); mesh = g;
-                } else if(type === 'stone') {
-                    mesh = new THREE.Mesh(new THREE.DodecahedronGeometry(0.6), new THREE.MeshLambertMaterial({map: this.textures.stone}));
-                    mesh.position.set(x, y+0.5, z);
-                } else if(type === 'gem') {
-                    mesh = new THREE.Mesh(new THREE.OctahedronGeometry(0.5), new THREE.MeshPhongMaterial({color:0x9b59b6, emissive:0x8e44ad}));
-                    mesh.position.set(x, y+0.8, z);
+                    mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 2, 8), new THREE.MeshLambertMaterial({map: this.textures.wood}));
+                    const leaves = new THREE.Mesh(new THREE.ConeGeometry(1.2, 2, 8), new THREE.MeshLambertMaterial({color:0x2E7D32}));
+                    leaves.position.y = 1.5;
+                    mesh.add(leaves);
+                    mesh.position.set(x, y+1, z);
+                } else {
+                    mesh = new THREE.Mesh(new THREE.DodecahedronGeometry(0.7), new THREE.MeshLambertMaterial({map: this.textures.stone}));
+                    mesh.position.set(x, y+0.7, z);
                 }
-                mesh.castShadow = true; this.scene.add(mesh);
+                mesh.castShadow = true;
+                this.scene.add(mesh);
+                
                 const box = new THREE.Box3().setFromObject(mesh);
-                mesh.userData = { type: 'resource', resType: type, box };
+                mesh.userData = { type: 'resource', resType: type, box: box };
                 this.colliders.push(mesh);
             }
 
-            scatterResources(cx, cy, cz, radius, type, count) {
-                for(let i=0; i<count; i++) {
-                    const angle = Math.random() * Math.PI * 2;
-                    const r = Math.random() * (radius - 3);
-                    this.createResource(cx + Math.cos(angle)*r, cy, cz + Math.sin(angle)*r, type);
-                }
-            }
-
-            createLava(x, y, z) {
-                const geo = new THREE.BoxGeometry(0.6, 0.6, 0.6);
-                const mat = new THREE.MeshBasicMaterial({color:0xff3300});
-                for(let i=0; i<15; i++) {
-                    const m = new THREE.Mesh(geo, mat);
-                    m.position.set(x + (Math.random()-0.5)*20, y, z + (Math.random()-0.5)*20);
-                    this.scene.add(m);
-                }
-            }
-
+            // --- 물리 및 충돌 ---
             updatePhysics() {
-                const time = Date.now();
-                this.movingPlatforms.forEach(p => {
-                    const val = p.userData.origin[p.userData.axis] + Math.sin(time * p.userData.speed) * p.userData.range;
-                    if(p.userData.axis === 'x') p.position.x = val;
-                    else if(p.userData.axis === 'z') p.position.z = val;
-                    p.userData.box.setFromObject(p);
-                });
-
+                // 중력
                 this.velocity.y -= this.config.gravity;
                 this.ball.position.add(this.velocity);
 
+                // 이동
                 const cy = this.cameraState.yaw;
-                const tx = (this.input.x * Math.cos(cy) + this.input.z * Math.sin(cy)) * this.config.moveSpeed * this.stats.speedLevel;
-                const tz = (this.input.x * -Math.sin(cy) + this.input.z * Math.cos(cy)) * this.config.moveSpeed * this.stats.speedLevel;
+                const tx = (this.input.x * Math.cos(cy) + this.input.z * Math.sin(cy)) * this.config.moveSpeed;
+                const tz = (this.input.x * -Math.sin(cy) + this.input.z * Math.cos(cy)) * this.config.moveSpeed;
                 this.velocity.x += (tx - this.velocity.x) * 0.15;
                 this.velocity.z += (tz - this.velocity.z) * 0.15;
 
-                const r = this.config.ballRadius * 0.7; 
-                const offsets = [
+                // 충돌 체크 (5점 레이캐스트)
+                const r = this.config.ballRadius * 0.8;
+                const origins = [
                     new THREE.Vector3(0,0,0), new THREE.Vector3(r,0,0), new THREE.Vector3(-r,0,0),
                     new THREE.Vector3(0,0,r), new THREE.Vector3(0,0,-r)
                 ];
-                const raycaster = new THREE.Raycaster();
-                raycaster.far = this.config.ballRadius + 0.3;
-                const down = new THREE.Vector3(0, -1, 0);
-
                 let groundY = -999;
                 let hitObj = null;
+                const raycaster = new THREE.Raycaster();
+                const down = new THREE.Vector3(0, -1, 0);
 
-                for(let off of offsets) {
-                    const origin = this.ball.position.clone().add(off);
+                for(let o of origins) {
+                    const origin = this.ball.position.clone().add(o);
                     raycaster.set(origin, down);
+                    // 가까운 물체만 체크
                     const intersects = raycaster.intersectObjects(this.colliders);
                     if(intersects.length > 0) {
                         const hit = intersects[0];
-                        if(hit.point.y > groundY) {
+                        if(hit.distance < this.config.ballRadius + 0.2 && hit.point.y > groundY) {
                             groundY = hit.point.y;
                             hitObj = hit.object;
                         }
                     }
                 }
 
-                if (this.velocity.y < 0 && this.ball.position.y <= groundY + this.config.ballRadius + 0.15) {
-                    this.velocity.y = this.config.bounceForce + (this.stats.jumpLevel * 0.05);
+                // 바닥 착지
+                if (this.velocity.y < 0 && this.ball.position.y <= groundY + this.config.ballRadius + 0.1) {
+                    // 점프력 (기본 + 레벨당 증가)
+                    const jumpPower = this.config.baseBounce + (this.stats.jumpLevel * 0.15);
+                    this.velocity.y = jumpPower;
                     this.ball.position.y = groundY + this.config.ballRadius;
                     
-                    let target = hitObj;
-                    while(target && !target.userData.type) target = target.parent;
-                    if(target && target.userData.type === 'resource') {
-                        this.gatherResource(target);
+                    // 자원 채집
+                    if(hitObj && hitObj.userData.type === 'resource') {
+                        this.gatherResource(hitObj);
                     }
                 }
 
+                // 그림자
                 if(groundY > -100) {
-                    this.ballShadow.position.set(this.ball.position.x, groundY + 0.02, this.ball.position.z);
+                    this.ballShadow.position.set(this.ball.position.x, groundY+0.02, this.ball.position.z);
                     this.ballShadow.visible = true;
                 } else {
                     this.ballShadow.visible = false;
                 }
 
+                // 낙사 리스폰
                 if(this.ball.position.y < -30) {
-                    this.ball.position.set(0, 5, 0);
-                    this.velocity.set(0,0,0);
-                    this.showToast("구조되었습니다!");
+                    this.respawn();
                 }
 
+                // 공 회전
                 this.ball.rotation.x -= this.velocity.z * 1.5;
                 this.ball.rotation.z += this.velocity.x * 1.5;
+
                 this.checkInteractions();
             }
 
+            respawn() {
+                this.velocity.set(0, 0, 0);
+                // 진행도에 따라 리스폰 위치 변경
+                if(this.ball.position.z < -180) this.ball.position.set(0, 15, -130);
+                else if(this.ball.position.z < -80) this.ball.position.set(0, 5, -50);
+                else this.ball.position.set(0, 5, 0);
+                this.showToast("구조되었습니다!");
+            }
+
+            // --- 상호작용 및 퀘스트 ---
             checkInteractions() {
                 let closest = null;
-                let minDist = 6; 
+                let minDist = 7; 
                 this.interactables.forEach(npc => {
-                    const dx = this.ball.position.x - npc.position.x;
-                    const dz = this.ball.position.z - npc.position.z;
-                    const dist = Math.sqrt(dx*dx + dz*dz);
+                    const dist = this.ball.position.distanceTo(npc.position);
                     if(dist < minDist) {
                         minDist = dist;
                         closest = npc;
@@ -590,12 +585,11 @@
 
                 if(closest !== this.activeNPC) {
                     this.activeNPC = closest;
-                    const btn = this.els.interactBtn;
+                    const btn = this.ui.interactBtn;
                     if(closest) {
                         btn.classList.add('visible');
                         btn.className = closest.userData.id === 'shop' ? 'shop' : '';
                         btn.classList.add('visible');
-                        this.showToast(`[${closest.userData.name}]`);
                     } else {
                         btn.classList.remove('visible');
                     }
@@ -617,10 +611,91 @@
                 }
             }
 
-            startCutscene(lines) {
-                // 기존 타이머 클리어
-                if(this.dialogueTimer) clearTimeout(this.dialogueTimer);
+            runQuestLogic() {
+                const lines = [];
+                // 퀘스트 상태 관리
+                if(this.questState === 0) {
+                    lines.push({name:'촌장', text:"자네가 전설의 용사인가? 마왕이 부활했네."});
+                    lines.push({name:'촌장', text:"하지만 지금은 너무 약해. 자원을 모아 상점에서 '점프력'을 강화하게."});
+                    this.questState = 1;
+                    this.ui.quest.innerHTML = "자원을 모아 상점에서<br>점프력을 강화하세요.";
+                } else if(this.questState === 1) {
+                    if(this.stats.jumpLevel > 0) {
+                        lines.push({name:'촌장', text:"오! 힘이 느껴지는군. 이제 북쪽 숲을 지나 마왕성으로 갈 수 있겠어!"});
+                        this.questState = 2;
+                        this.ui.quest.innerHTML = "북쪽 숲을 지나<br>마왕을 물리치세요!";
+                    } else {
+                        lines.push({name:'촌장', text:"아직일세. 상점에서 강화를 해야 다리를 건널 수 있어."});
+                    }
+                } else {
+                    lines.push({name:'촌장', text:"마왕을 꼭 물리쳐 주게!"});
+                }
+                this.startDialogue(lines);
+            }
+
+            // --- 상점 기능 ---
+            shopSell() {
+                if(this.resources.wood >= 5 && this.resources.stone >= 5) {
+                    this.resources.wood -= 5;
+                    this.resources.stone -= 5;
+                    this.resources.gold += 50;
+                    this.updateHUD();
+                    this.showToast("자원을 팔아 50G 획득!");
+                } else {
+                    this.showToast("나무와 돌이 5개씩 필요합니다.");
+                }
+            }
+
+            shopUpgrade() {
+                if(this.resources.gold >= 200) {
+                    this.resources.gold -= 200;
+                    this.stats.jumpLevel++;
+                    this.updateHUD();
+                    this.showToast("점프력 강화 완료!");
+                    
+                    // 퀘스트 조건 충족 알림
+                    if(this.questState === 1) {
+                        this.ui.quest.innerHTML = "촌장님께 돌아가세요!";
+                        this.showToast("퀘스트 조건 달성!");
+                    }
+                } else {
+                    this.showToast("골드가 부족합니다 (200G)");
+                }
+            }
+
+            gatherResource(obj) {
+                const type = obj.userData.resType;
+                if(!type) return;
                 
+                if(type === 'wood') this.resources.wood++;
+                else this.resources.stone++;
+                
+                this.updateHUD();
+                this.showToast(`${type.toUpperCase()} 획득!`);
+                
+                // 임시 제거
+                obj.position.y -= 100;
+                setTimeout(() => { obj.position.y += 100; }, 3000);
+            }
+
+            // --- 시각 효과 ---
+            updateHUD() {
+                this.ui.wood.innerText = this.resources.wood;
+                this.ui.stone.innerText = this.resources.stone;
+                this.ui.gold.innerText = this.resources.gold;
+            }
+
+            showToast(msg) {
+                const t = this.ui.toast;
+                t.innerText = msg;
+                t.style.opacity = 1;
+                setTimeout(() => t.style.opacity = 0, 2000);
+            }
+
+            closeShop() { document.getElementById('shop-modal').style.display = 'none'; this.inCutscene = false; }
+
+            // --- 대화 시스템 (중복 방지) ---
+            startCutscene(lines) {
                 this.inCutscene = true;
                 document.body.classList.add('cinematic');
                 this.input.x = 0; this.input.z = 0;
@@ -631,43 +706,44 @@
             }
 
             startDialogue(lines, onComplete) {
-                const box = this.els.dialogueBox;
-                const nameEl = this.els.dialName;
-                const textEl = this.els.dialText;
+                if(this.typingTimer) clearTimeout(this.typingTimer);
+                const box = this.ui.dialogueBox;
+                const nameEl = this.ui.dialName;
+                const textEl = this.ui.dialText;
                 let index = 0;
                 let isTyping = false;
                 let currentText = "";
 
-                if(this.dialogueTimer) clearTimeout(this.dialogueTimer);
-
                 box.style.bottom = '50px';
 
                 const next = () => {
-                    if (isTyping) {
-                        if(this.dialogueTimer) clearTimeout(this.dialogueTimer);
+                    if(isTyping) {
+                        // 스킵 기능
+                        clearTimeout(this.typingTimer);
                         textEl.innerHTML = currentText;
                         isTyping = false;
                         return;
                     }
 
                     if(index >= lines.length) {
-                        box.style.bottom = '-250px';
+                        box.style.bottom = '-300px';
                         box.onclick = null;
                         if(onComplete) onComplete();
                         else this.inCutscene = false;
                         return;
                     }
+
                     const line = lines[index++];
                     nameEl.innerText = line.name;
                     textEl.innerHTML = "";
                     currentText = line.text;
                     isTyping = true;
-                    
+
                     let charIdx = 0;
                     const type = () => {
                         if(charIdx < currentText.length) {
                             textEl.innerHTML += currentText.charAt(charIdx++);
-                            this.dialogueTimer = setTimeout(type, 30);
+                            this.typingTimer = setTimeout(type, 30);
                         } else {
                             isTyping = false;
                         }
@@ -680,87 +756,10 @@
                 next();
             }
 
-            runQuestLogic() {
-                const lines = [];
-                if(this.questState === 0) {
-                    lines.push({name:'촌장', text:"자네가 전설의 용사인가? 마왕이 부활했네."});
-                    lines.push({name:'촌장', text:"하지만 지금은 너무 약해. 자원을 모아 '상인'에게 가서 장비를 강화하게."});
-                    this.questState = 1;
-                    this.els.quest.innerText = "자원 수집 및 장비 강화";
-                } else if(this.questState === 1) {
-                    if(this.stats.jumpLevel > 1) {
-                        lines.push({name:'촌장', text:"오! 강해졌군. 이제 북쪽 숲을 지나 마왕성으로 가게!"});
-                        this.questState = 3;
-                        this.els.quest.innerText = "북쪽 마왕성으로 이동!";
-                    } else {
-                        lines.push({name:'촌장', text:"아직일세. 상점에서 '점프력 강화'를 꼭 하게나."});
-                    }
-                } else {
-                    lines.push({name:'촌장', text:"마왕을 물리쳐주게!"});
-                }
-                this.startDialogue(lines);
-            }
-
-            gatherResource(obj) {
-                const type = obj.userData.resType;
-                if(!type) return;
-                if(type === 'wood') this.resources.wood++;
-                if(type === 'stone') this.resources.stone++;
-                if(type === 'gem') this.resources.gem++;
-                this.updateHUD();
-                this.showToast(`+1 ${type.toUpperCase()}`);
-                obj.position.y -= 100;
-                setTimeout(() => { obj.position.y += 100; }, 5000);
-            }
-
-            shopSell() {
-                if(this.resources.wood >= 5 && this.resources.stone >= 5 && this.resources.gem >= 5) {
-                    this.resources.wood -= 5; this.resources.stone -= 5; this.resources.gem -= 5;
-                    this.resources.gold += 50;
-                    this.updateHUD();
-                    this.showToast("판매 완료 (+50G)");
-                } else {
-                    this.showToast("자원이 부족합니다.");
-                }
-            }
-
-            shopUpgradeJump() {
-                if(this.resources.gold >= 200) {
-                    this.resources.gold -= 200;
-                    this.stats.jumpLevel++;
-                    this.updateHUD();
-                    this.showToast("점프력 강화 완료!");
-                } else {
-                    this.showToast("골드가 부족합니다.");
-                }
-            }
-
-            shopUpgradeSpeed() {
-                if(this.resources.gold >= 100) {
-                    this.resources.gold -= 100;
-                    this.stats.speedLevel += 0.2;
-                    this.updateHUD();
-                    this.showToast("이동속도 강화 완료!");
-                } else {
-                    this.showToast("골드가 부족합니다.");
-                }
-            }
-
-            closeShop() { document.getElementById('shop-modal').style.display = 'none'; this.inCutscene = false; }
-            updateHUD() {
-                this.els.wood.innerText = this.resources.wood;
-                this.els.stone.innerText = this.resources.stone;
-                this.els.gem.innerText = this.resources.gem;
-                this.els.gold.innerText = this.resources.gold;
-            }
-            showToast(msg) {
-                const t = this.els.toast; t.innerText = msg; t.style.opacity = 1;
-                setTimeout(() => t.style.opacity = 0, 2000);
-            }
-
+            // --- 입력 ---
             setupInputs() {
-                const joyZone = this.els.joystickZone;
-                const joyKnob = this.els.joystickKnob;
+                const joyZone = document.getElementById('joystick-zone');
+                const joyKnob = document.getElementById('joystick-knob');
                 let joyId = null, startX=0, startY=0;
 
                 const touchMove = document.getElementById('touch-move');
@@ -769,7 +768,11 @@
                     const t = e.changedTouches[0]; joyId = t.identifier;
                     startX = t.clientX; startY = t.clientY;
                     joyZone.style.display = 'block';
-                    joyZone.style.left = startX + 'px'; joyZone.style.top = startY + 'px';
+                    
+                    // 조이스틱 보정 (터치 지점 중심)
+                    joyZone.style.left = (startX - 70) + 'px';
+                    joyZone.style.top = (startY - 70) + 'px';
+                    
                     joyKnob.style.transform = `translate(-50%, -50%)`;
                     this.input.x = 0; this.input.z = 0;
                 }, {passive:false});
@@ -797,26 +800,43 @@
                         }
                     }
                 };
-                touchMove.addEventListener('touchend', endJoy); touchMove.addEventListener('touchcancel', endJoy);
+                touchMove.addEventListener('touchend', endJoy); 
+                touchMove.addEventListener('touchcancel', endJoy);
 
-                let lastCamX=0;
+                // 카메라 & 상호작용 (상하좌우 자유 시점)
+                let lastCamX = 0, lastCamY = 0;
                 const touchCam = document.getElementById('touch-camera');
+                
                 touchCam.addEventListener('touchstart', e => {
                     if(e.target.closest('#btn-interact')) return;
-                    e.preventDefault(); lastCamX = e.changedTouches[0].clientX;
+                    e.preventDefault(); 
+                    lastCamX = e.changedTouches[0].clientX;
+                    lastCamY = e.changedTouches[0].clientY;
                 }, {passive:false});
+
                 touchCam.addEventListener('touchmove', e => {
                     if(e.target.closest('#btn-interact')) return;
                     e.preventDefault(); if(this.inCutscene) return;
+                    
                     const t = e.changedTouches[0];
                     const dx = t.clientX - lastCamX;
-                    this.cameraState.yaw -= dx * 0.003;
+                    const dy = t.clientY - lastCamY;
+                    
+                    // 좌우 회전 (Yaw)
+                    this.cameraState.yaw -= dx * 0.005;
+                    
+                    // 상하 회전 (Pitch) - 제한 적용 (0.1 ~ 1.5 라디안)
+                    this.cameraState.pitch += dy * 0.005;
+                    this.cameraState.pitch = Math.max(0.1, Math.min(1.5, this.cameraState.pitch));
+
                     lastCamX = t.clientX;
+                    lastCamY = t.clientY;
                 }, {passive:false});
 
-                this.els.interactBtn.addEventListener('click', (e) => { e.stopPropagation(); this.interact(); });
-                this.els.interactBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); this.interact(); });
+                this.ui.interactBtn.addEventListener('click', e => { e.stopPropagation(); this.interact(); });
+                this.ui.interactBtn.addEventListener('touchstart', e => { e.stopPropagation(); this.interact(); });
 
+                // PC Key
                 document.addEventListener('keydown', e => {
                     if(this.inCutscene) return;
                     switch(e.key.toLowerCase()) {
@@ -828,11 +848,33 @@
                     }
                 });
                 document.addEventListener('keyup', e => {
-                    if('wasd'.includes(e.key.toLowerCase())) {
-                        if(['w','s'].includes(e.key.toLowerCase())) this.input.z = 0;
-                        if(['a','d'].includes(e.key.toLowerCase())) this.input.x = 0;
-                    }
+                    if(['w','s'].includes(e.key.toLowerCase())) this.input.z = 0;
+                    if(['a','d'].includes(e.key.toLowerCase())) this.input.x = 0;
                 });
+
+                // PC 마우스 시점 조작 추가
+                let isMouseDown = false;
+                document.addEventListener('mousedown', e => {
+                    if(this.inCutscene || e.target.closest('#btn-interact') || e.target.closest('.modal-overlay')) return;
+                    isMouseDown = true;
+                    lastCamX = e.clientX;
+                    lastCamY = e.clientY;
+                });
+
+                document.addEventListener('mousemove', e => {
+                    if(!isMouseDown || this.inCutscene) return;
+                    const dx = e.clientX - lastCamX;
+                    const dy = e.clientY - lastCamY;
+                    
+                    this.cameraState.yaw -= dx * 0.005;
+                    this.cameraState.pitch += dy * 0.005;
+                    this.cameraState.pitch = Math.max(0.1, Math.min(1.5, this.cameraState.pitch));
+                    
+                    lastCamX = e.clientX;
+                    lastCamY = e.clientY;
+                });
+
+                document.addEventListener('mouseup', () => isMouseDown = false);
             }
 
             animate() {
@@ -840,12 +882,13 @@
                 if (!this.inCutscene) this.updatePhysics();
                 else this.ball.position.y = 2 + Math.sin(Date.now()*0.002)*0.2;
 
-                const tx = this.ball.position.x + this.cameraState.dist * Math.cos(this.cameraState.pitch) * Math.sin(this.cameraState.yaw);
-                const tz = this.ball.position.z + this.cameraState.dist * Math.cos(this.cameraState.pitch) * Math.cos(this.cameraState.yaw);
-                const ty = this.ball.position.y + this.cameraState.dist * Math.sin(this.cameraState.pitch);
-                this.camera.position.lerp(new THREE.Vector3(tx, ty, tz), 0.1);
+                const cx = this.ball.position.x + this.cameraState.dist * Math.cos(this.cameraState.pitch) * Math.sin(this.cameraState.yaw);
+                const cz = this.ball.position.z + this.cameraState.dist * Math.cos(this.cameraState.pitch) * Math.cos(this.cameraState.yaw);
+                const cy = this.ball.position.y + this.cameraState.dist * Math.sin(this.cameraState.pitch);
+                
+                this.camera.position.lerp(new THREE.Vector3(cx, cy, cz), 0.1);
                 this.camera.lookAt(this.ball.position);
-
+                
                 this.renderer.render(this.scene, this.camera);
             }
 
