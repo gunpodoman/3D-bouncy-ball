@@ -55,15 +55,13 @@
         }
         .quest-title { color: #f39c12; font-weight: bold; margin-bottom: 5px; font-size: 18px; font-family: 'Black Han Sans', sans-serif; }
 
-        /* 조이스틱 스타일 수정 (transform 제거) */
         #joystick-zone {
-            position: absolute; 
+            position: absolute; bottom: 40px; left: 40px;
             width: 140px; height: 140px;
             background: rgba(255, 255, 255, 0.1);
             border: 2px solid rgba(255, 255, 255, 0.2);
             border-radius: 50%;
             pointer-events: auto; display: none;
-            /* transform: translate(-50%, -50%); 제거 -> JS에서 직접 좌표 계산 */
         }
         #joystick-knob {
             position: absolute; top: 50%; left: 50%;
@@ -180,7 +178,7 @@
         <div class="dialogue-next">터치하여 계속 ▶</div>
     </div>
 
-    <!-- 상점 UI -->
+    <!-- 상점 UI (가격 수정됨) -->
     <div id="shop-modal" class="modal-overlay">
         <div class="shop-content">
             <h2 style="margin-top:0; color:#e67e22; font-size: 32px;">🛒 모험가 상점</h2>
@@ -195,7 +193,7 @@
 
             <div class="shop-item">
                 <div class="shop-desc">
-                    <strong>점프력 강화</strong> (200 Gold)
+                    <strong>점프력 강화</strong> (100 Gold) <!-- 가격 수정됨 -->
                     <small>높은 곳에 닿을 수 있습니다.</small>
                 </div>
                 <button class="shop-btn" style="background:#e74c3c" onclick="game.shopUpgrade()">강화</button>
@@ -368,9 +366,9 @@
                     this.createResource((Math.random()-0.5)*20, 0, (Math.random()-0.5)*20, 'stone');
                 }
 
-                // 2. 다리 (마을 -> 숲) (Z: -30 ~ -80)
-                // 다리 간격 좁힘 (i * 5) -> 쉽게 건널 수 있음
-                this.createBridge(0, 0, -30, 10); 
+                // 2. 다리 (마을 -> 숲) (Z: -15 ~ -87.5)
+                // 수정됨: 시작 위치를 당기고(-16), 개수를 늘려(16개) 숲까지 완벽하게 연결
+                this.createBridge(0, 0, -16, 16); 
 
                 // 3. 숲 (Z: -100)
                 this.createPlatform(0, 0, -100, 25, 25, 'grass');
@@ -415,7 +413,6 @@
                 const tex = this.textures[texName];
                 const mat = new THREE.MeshLambertMaterial({ map: tex });
                 const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, 1, d), mat);
-                // 윗면이 y에 오도록 (y-0.5)
                 mesh.position.set(x, y - 0.5, z);
                 mesh.receiveShadow = true;
                 this.scene.add(mesh);
@@ -647,8 +644,8 @@
             }
 
             shopUpgrade() {
-                if(this.resources.gold >= 200) {
-                    this.resources.gold -= 200;
+                if(this.resources.gold >= 100) { // 가격 수정됨: 200 -> 100
+                    this.resources.gold -= 100;
                     this.stats.jumpLevel++;
                     this.updateHUD();
                     this.showToast("점프력 강화 완료!");
@@ -659,7 +656,7 @@
                         this.showToast("퀘스트 조건 달성!");
                     }
                 } else {
-                    this.showToast("골드가 부족합니다 (200G)");
+                    this.showToast("골드가 부족합니다 (100G)");
                 }
             }
 
