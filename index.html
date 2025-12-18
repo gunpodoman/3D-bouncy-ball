@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>Bounce Ball RPG</title>
-    <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+    <title>Bounce Ball RPG: Legend of Hero</title>
+    <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Jua&display=swap" rel="stylesheet">
     <style>
         body {
             margin: 0;
@@ -33,40 +33,50 @@
             z-index: 10;
         }
 
-        /* 자원 표시줄 */
+        /* 상단 자원바 */
         .resource-bar {
             position: absolute;
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 15px;
-            background: rgba(0, 0, 0, 0.6);
-            padding: 10px 25px;
-            border-radius: 30px;
+            gap: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 12px 30px;
+            border-radius: 50px;
             color: white;
-            font-size: 18px;
-            backdrop-filter: blur(4px);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            font-size: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            border: 2px solid #FFD700;
         }
 
-        .res-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
+        /* 퀘스트 알림 */
+        #quest-box {
+            position: absolute;
+            top: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 16px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
 
-        /* 조이스틱 */
+        /* 조이스틱 (좌측 하단) */
         #joystick-base {
             position: absolute;
             width: 120px;
             height: 120px;
             background: rgba(255, 255, 255, 0.2);
             border-radius: 50%;
-            border: 2px solid rgba(255, 255, 255, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.5);
             display: none;
             pointer-events: none;
             transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px rgba(255,255,255,0.2);
         }
 
         #joystick-knob {
@@ -78,131 +88,97 @@
             background: rgba(255, 255, 255, 0.9);
             border-radius: 50%;
             transform: translate(-50%, -50%);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
 
-        /* 상호작용 버튼 */
-        #interaction-ui {
+        /* 상호작용 버튼 (우측 하단 고정) */
+        #btn-interact-action {
             position: absolute;
-            bottom: 150px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 15px;
-            text-align: center;
-            opacity: 0;
-            transition: opacity 0.2s;
-            pointer-events: none; /* 보일 때만 auto로 변경 */
+            bottom: 50px;
+            right: 50px;
+            width: 90px;
+            height: 90px;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            border: 4px solid #FFF;
+            border-radius: 50%;
+            font-size: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 8px 0 #b8860b, 0 15px 20px rgba(0,0,0,0.4);
+            pointer-events: auto; /* 터치 가능 */
+            transition: transform 0.1s, opacity 0.2s;
+            opacity: 0.5; /* 평소엔 반투명 */
+            cursor: pointer;
+        }
+
+        #btn-interact-action.active {
+            opacity: 1;
+            transform: scale(1.1);
+            animation: pulse 1s infinite;
         }
         
-        #interaction-ui.visible {
-            opacity: 1;
-            pointer-events: auto;
-            animation: bounceIn 0.3s;
+        #btn-interact-action:active {
+            transform: scale(0.95) translateY(4px);
+            box-shadow: 0 4px 0 #b8860b;
         }
 
-        .btn-action {
-            background: #FFD700;
-            border: none;
-            padding: 8px 20px;
-            border-radius: 8px;
-            color: #333;
-            font-family: 'Jua', sans-serif;
-            font-size: 16px;
-            cursor: pointer;
-            margin-top: 5px;
-            font-weight: bold;
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(255, 215, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
         }
 
-        /* 대화창 & 상점 모달 (공통 스타일) */
+        /* 대화창 & 모달 */
         .modal {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             background: #fff;
-            padding: 25px;
+            padding: 30px;
             border-radius: 20px;
-            width: 320px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            width: 80%;
+            max-width: 400px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
             display: none;
             pointer-events: auto;
             text-align: center;
             color: #333;
-            z-index: 50;
-        }
-        
-        .modal h2 { margin-top: 0; color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        .modal p { font-size: 18px; line-height: 1.5; color: #555; }
-
-        .shop-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 15px;
+            z-index: 100;
+            border: 5px solid #8B4513;
         }
 
-        .btn-buy {
-            background: #4CAF50;
+        .modal h2 { margin-top: 0; color: #8B4513; border-bottom: 2px dashed #D2691E; padding-bottom: 15px; font-family: 'Black Han Sans', sans-serif; font-size: 32px; }
+        .modal p { font-size: 20px; line-height: 1.6; color: #555; margin: 20px 0; }
+
+        .btn-modal {
+            background: #8B4513;
             color: white;
             border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
+            padding: 12px 30px;
+            border-radius: 10px;
             cursor: pointer;
-        }
-        .btn-buy:hover { background: #45a049; }
-
-        .btn-close {
-            margin-top: 20px;
-            background: #f44336;
-            color: white;
-            border: none;
-            padding: 10px 25px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
+            font-size: 18px;
+            font-family: 'Jua', sans-serif;
+            margin-top: 10px;
         }
 
-        /* 토스트 메시지 (알림) */
+        /* 알림 메시지 */
         #toast {
             position: absolute;
-            top: 100px;
+            bottom: 150px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0,0,0,0.7);
-            color: #fff;
-            padding: 10px 20px;
-            border-radius: 20px;
+            background: rgba(0,0,0,0.8);
+            color: #FFD700;
+            padding: 12px 30px;
+            border-radius: 30px;
             opacity: 0;
             transition: opacity 0.5s;
             pointer-events: none;
-            font-size: 16px;
-            white-space: nowrap;
-        }
-
-        /* 플로팅 텍스트 (자원 획득 시) */
-        .floating-text {
-            position: absolute;
-            color: #FFD700;
-            font-weight: bold;
-            font-size: 20px;
-            text-shadow: 1px 1px 0 #000;
-            pointer-events: none;
-            animation: floatUp 1s forwards;
-        }
-
-        @keyframes floatUp {
-            0% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(-50px); }
-        }
-
-        @keyframes bounceIn {
-            0% { transform: translateX(-50%) scale(0.8); }
-            100% { transform: translateX(-50%) scale(1); }
+            font-size: 18px;
+            z-index: 50;
         }
 
         /* 터치 영역 */
@@ -216,55 +192,54 @@
     <div id="game-container"></div>
 
     <div id="ui-layer">
-        <!-- 자원 표시 -->
         <div class="resource-bar">
-            <div class="res-item">🪵 <span id="res-wood">0</span></div>
-            <div class="res-item">🪨 <span id="res-stone">0</span></div>
-            <div class="res-item">💰 <span id="res-gold">0</span></div>
+            <span>🪵 <span id="res-wood">0</span></span>
+            <span>🪨 <span id="res-stone">0</span></span>
+            <span>💰 <span id="res-gold">0</span></span>
         </div>
-
-        <!-- 알림 메시지 -->
-        <div id="toast">알림 메시지</div>
-
-        <!-- 상호작용 버튼 -->
-        <div id="interaction-ui">
-            <div id="interaction-text">NPC 이름</div>
-            <button class="btn-action" id="btn-interact">대화하기</button>
-        </div>
+        
+        <div id="quest-box">📜 현재 목표: 촌장님을 만나세요!</div>
+        <div id="toast">알림</div>
 
         <!-- 조이스틱 -->
         <div id="joystick-base">
             <div id="joystick-knob"></div>
         </div>
 
-        <!-- 터치 입력 영역 -->
+        <!-- 상호작용 버튼 -->
+        <div id="btn-interact-action">✋</div>
+
+        <!-- 터치 영역 -->
         <div id="touch-left"></div>
         <div id="touch-right"></div>
     </div>
 
-    <!-- 대화창 모달 -->
+    <!-- 대화창 -->
     <div id="dialogue-modal" class="modal">
-        <h2 id="dialogue-name">NPC</h2>
-        <p id="dialogue-text">대화 내용</p>
-        <button class="btn-close" onclick="game.closeDialogue()">확인</button>
+        <h2 id="npc-name">NPC</h2>
+        <p id="npc-text">대화 내용</p>
+        <button class="btn-modal" onclick="game.closeDialogue()">확인</button>
     </div>
 
-    <!-- 상점 모달 -->
+    <!-- 상점 -->
     <div id="shop-modal" class="modal">
-        <h2>🛠️ 숲속 상점</h2>
-        <div class="shop-item">
-            <span>🪵🪨 자원 판매 (각 5개 → 10G)</span>
-            <button class="btn-buy" onclick="game.sellResources()">판매</button>
+        <h2>💰 모험가 상점</h2>
+        <div style="text-align:left; margin-bottom: 20px;">
+            <p>1. 자원 판매 (각 5개 → 30G)<br>
+            <button class="btn-modal" style="background:#2ecc71; width:100%" onclick="game.sellResources()">판매하기</button></p>
+            
+            <p>2. 용사의 힘 강화 (100G)<br>
+            <span style="font-size:14px; color:#666">* 점프력이 상승하여 마왕성에 갈 수 있습니다.</span>
+            <button class="btn-modal" style="background:#e74c3c; width:100%" onclick="game.upgradeJump()">강화하기</button></p>
         </div>
-        <div class="shop-item">
-            <span>🚀 점프력 강화 (50G)</span>
-            <button class="btn-buy" onclick="game.upgradeJump()">강화</button>
-        </div>
-        <div class="shop-item">
-            <span>⚡ 이동속도 강화 (50G)</span>
-            <button class="btn-buy" onclick="game.upgradeSpeed()">강화</button>
-        </div>
-        <button class="btn-close" onclick="game.closeShop()">닫기</button>
+        <button class="btn-modal" style="background:#95a5a6" onclick="game.closeShop()">나가기</button>
+    </div>
+
+    <!-- 엔딩 화면 -->
+    <div id="ending-modal" class="modal" style="border-color: #FFD700;">
+        <h2 style="color:#FFD700">🎉 전설의 용사!</h2>
+        <p>축하합니다!<br>마왕을 물리치고 평화를 되찾았습니다!</p>
+        <button class="btn-modal" onclick="location.reload()">다시 모험하기</button>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -272,6 +247,7 @@
     <script>
         class Game {
             constructor() {
+                // 게임 설정
                 this.config = {
                     gravity: 0.015,
                     bounceForce: 0.35,
@@ -280,6 +256,7 @@
                 };
                 
                 this.resources = { wood: 0, stone: 0, gold: 0 };
+                this.questStep = 0; // 0: 시작, 1: 촌장대화, 2: 강화필요, 3: 마왕토벌
                 
                 this.scene = null;
                 this.camera = null;
@@ -287,77 +264,67 @@
                 this.ball = null;
                 this.ballShadow = null;
                 
-                this.objects = []; // 물리 충돌체 목록
-                this.interactables = []; // 상호작용(NPC) 목록
+                this.objects = []; // 물리 충돌체
+                this.interactables = []; // 상호작용 객체
                 this.particles = [];
-                this.floatingTexts = [];
                 
                 this.velocity = new THREE.Vector3(0, 0, 0);
                 this.input = { x: 0, z: 0 };
-                this.cameraState = { yaw: 0, pitch: 0.6, dist: 12 };
+                this.cameraState = { yaw: 0, pitch: 0.5, dist: 14 };
                 
-                this.isPlaying = false;
-                this.activeNPC = null;
+                this.isPlaying = true;
+                this.activeNPC = null; // 현재 상호작용 가능한 NPC
 
-                // DOM Elements
+                // UI
                 this.uiWood = document.getElementById('res-wood');
                 this.uiStone = document.getElementById('res-stone');
                 this.uiGold = document.getElementById('res-gold');
-                this.interactionUI = document.getElementById('interaction-ui');
-                this.interactionText = document.getElementById('interaction-text');
-                this.shopModal = document.getElementById('shop-modal');
-                this.dialogueModal = document.getElementById('dialogue-modal');
-                this.toastEl = document.getElementById('toast');
+                this.questBox = document.getElementById('quest-box');
+                this.interactBtn = document.getElementById('btn-interact-action');
                 
                 this.joystickBase = document.getElementById('joystick-base');
                 this.joystickKnob = document.getElementById('joystick-knob');
                 
-                // 생성자에서 init을 호출하여 초기화 시작
                 this.init();
             }
 
             init() {
-                // Scene
+                // 1. Scene
                 this.scene = new THREE.Scene();
                 this.scene.background = new THREE.Color(0x87CEEB);
-                this.scene.fog = new THREE.Fog(0x87CEEB, 20, 80);
+                this.scene.fog = new THREE.Fog(0x87CEEB, 20, 90);
 
-                // Camera
-                this.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+                // 2. Camera
+                this.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 150);
                 
-                // Renderer
-                this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                // 3. Renderer
+                this.renderer = new THREE.WebGLRenderer({ antialias: true });
                 this.renderer.setSize(window.innerWidth, window.innerHeight);
                 this.renderer.shadowMap.enabled = true;
                 this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
                 document.getElementById('game-container').appendChild(this.renderer.domElement);
 
-                // Lights
+                // 4. Light
                 const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
                 this.scene.add(ambientLight);
 
-                const dirLight = new THREE.DirectionalLight(0xffffff, 0.7);
-                dirLight.position.set(20, 40, 20);
+                const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                dirLight.position.set(30, 50, 30);
                 dirLight.castShadow = true;
                 dirLight.shadow.mapSize.width = 2048;
                 dirLight.shadow.mapSize.height = 2048;
-                dirLight.shadow.camera.left = -40;
-                dirLight.shadow.camera.right = 40;
-                dirLight.shadow.camera.top = 40;
-                dirLight.shadow.camera.bottom = -40;
+                dirLight.shadow.camera.left = -50;
+                dirLight.shadow.camera.right = 50;
+                dirLight.shadow.camera.top = 50;
+                dirLight.shadow.camera.bottom = -50;
                 this.scene.add(dirLight);
 
+                // 5. World Generation
                 this.createPlayer();
-                this.generateWorld();
+                this.generateMaps();
                 this.setupInputs();
-                
-                window.addEventListener('resize', () => this.onResize());
-                document.getElementById('btn-interact').addEventListener('click', () => this.interact());
 
-                // 즉시 게임 시작
-                this.isPlaying = true;
-                this.showToast("게임이 시작되었습니다! 자원을 모아보세요.");
-                
+                this.showToast("모험이 시작되었습니다!");
                 this.animate();
             }
 
@@ -365,7 +332,7 @@
                 const geo = new THREE.SphereGeometry(this.config.ballRadius, 32, 32);
                 const mat = new THREE.MeshPhongMaterial({ color: 0xFF4500 });
                 this.ball = new THREE.Mesh(geo, mat);
-                this.ball.position.set(0, 5, 0);
+                this.ball.position.set(0, 5, 0); // 마을 시작
                 this.ball.castShadow = true;
                 this.scene.add(this.ball);
 
@@ -376,126 +343,173 @@
                 this.scene.add(this.ballShadow);
             }
 
-            generateWorld() {
-                // 바닥
-                const groundGeo = new THREE.CylinderGeometry(40, 40, 10, 64);
-                const groundMat = new THREE.MeshLambertMaterial({ color: 0x4CAF50 });
-                const ground = new THREE.Mesh(groundGeo, groundMat);
-                ground.position.y = -5;
-                ground.receiveShadow = true;
-                this.scene.add(ground);
-                this.objects.push(ground);
+            // --- 맵 생성 (스토리형 3단 구성) ---
+            generateMaps() {
+                // Zone 1: 평화의 마을 (중심: 0, 0)
+                this.createIsland(0, 0, 0, 20, 0x7CFC00); 
+                this.createHouse(5, 0, 5, 0xFFE4B5); // 촌장 집
+                this.createNPC(5, 0, 8, 'chief', '촌장');
+                this.createNPC(-5, 0, 2, 'shop', '상인');
+                this.createTree(8, 0, -5); // 마을 나무
+                this.createTree(-8, 0, -8);
 
-                // 건물
-                this.createBuilding(5, 0, 5, 0x8B4513);
-                this.createBuilding(-5, 0, 8, 0xA0522D);
+                // Zone 2: 죽음의 숲 (북쪽: 0, -50) - 징검다리로 연결
+                this.createBridge(0, 0, -18, 15); 
+                this.createIsland(0, 0, -50, 25, 0x228B22); // 짙은 녹색
                 
-                // NPC
-                this.createNPC(2, 0, 2, 'shop', '잡화점 주인');
-                this.createNPC(-3, 0, -3, 'quest', '마을 촌장');
-
-                // 나무 (30개)
-                for(let i=0; i<30; i++) {
-                    const angle = Math.random() * Math.PI; 
-                    const dist = 10 + Math.random() * 25;
-                    const x = Math.cos(angle) * dist;
-                    const z = Math.sin(angle) * dist - 10;
-                    this.createTree(x, 0, z);
+                // 숲 자원 배치
+                for(let i=0; i<15; i++) {
+                    const x = (Math.random()-0.5) * 30;
+                    const z = -50 + (Math.random()-0.5) * 30;
+                    if(Math.random() > 0.5) this.createTree(x, 0, z);
+                    else this.createRock(x, 0, z);
                 }
 
-                // 바위 (20개)
-                for(let i=0; i<20; i++) {
-                    const angle = Math.random() * Math.PI + Math.PI; 
-                    const dist = 10 + Math.random() * 25;
-                    const x = Math.cos(angle) * dist;
-                    const z = Math.sin(angle) * dist + 10; 
-                    this.createRock(x, 0, z);
-                }
+                // Zone 3: 마왕성 (더 북쪽: 0, -110) - 가기 힘들게 배치
+                this.createBridge(0, 2, -73, 10); // 약간 높음
+                this.createIsland(0, 5, -110, 15, 0x2F4F4F); // 어두운 색
                 
-                // 물
-                const waterGeo = new THREE.RingGeometry(38, 100, 64);
-                const waterMat = new THREE.MeshPhongMaterial({ color: 0x1E90FF, transparent: true, opacity: 0.6 });
-                const water = new THREE.Mesh(waterGeo, waterMat);
-                water.rotation.x = -Math.PI / 2;
-                water.position.y = -0.5;
-                this.scene.add(water);
+                // 마왕 NPC
+                this.createNPC(0, 5, -110, 'boss', '마왕');
+                // 마왕 주변 파티클
+                this.createBossEffect(0, 5, -110);
+                
+                // 바다 (낙사 구역)
+                const seaGeo = new THREE.PlaneGeometry(500, 500);
+                const seaMat = new THREE.MeshPhongMaterial({ color: 0x1E90FF, transparent:true, opacity:0.8 });
+                const sea = new THREE.Mesh(seaGeo, seaMat);
+                sea.rotation.x = -Math.PI / 2;
+                sea.position.y = -5;
+                this.scene.add(sea);
             }
 
-            createBuilding(x, y, z, color) {
-                const geo = new THREE.BoxGeometry(3, 3, 3);
+            createIsland(x, y, z, radius, color) {
+                const geo = new THREE.CylinderGeometry(radius, radius, 10, 32);
                 const mat = new THREE.MeshLambertMaterial({ color: color });
                 const mesh = new THREE.Mesh(geo, mat);
-                mesh.position.set(x, y + 1.5, z);
-                mesh.castShadow = true;
+                mesh.position.set(x, y - 5, z); // 표면이 y에 오도록
                 mesh.receiveShadow = true;
                 this.scene.add(mesh);
+                this.objects.push(mesh);
+            }
+
+            createBridge(x, y, z, length) {
+                // 징검다리 3개
+                for(let i=0; i<3; i++) {
+                    const bX = x;
+                    const bZ = z - (i * (length/3));
+                    const bY = y + (i * 0.5); // 약간씩 높아짐
+                    
+                    const geo = new THREE.BoxGeometry(3, 1, 3);
+                    const mat = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+                    const mesh = new THREE.Mesh(geo, mat);
+                    mesh.position.set(bX, bY - 0.5, bZ);
+                    mesh.receiveShadow = true;
+                    this.scene.add(mesh);
+                    this.objects.push(mesh);
+                }
+            }
+
+            createHouse(x, y, z, color) {
+                const bodyGeo = new THREE.BoxGeometry(4, 3, 4);
+                const bodyMat = new THREE.MeshLambertMaterial({ color: color });
+                const body = new THREE.Mesh(bodyGeo, bodyMat);
+                body.position.set(x, y+1.5, z);
+                body.castShadow = true;
+                this.scene.add(body);
+                this.objects.push(body);
+
+                const roofGeo = new THREE.ConeGeometry(3.5, 2, 4);
+                const roofMat = new THREE.MeshLambertMaterial({ color: 0x8B0000 });
+                const roof = new THREE.Mesh(roofGeo, roofMat);
+                roof.position.set(x, y+4, z);
+                roof.rotation.y = Math.PI/4;
+                this.scene.add(roof);
+            }
+
+            createNPC(x, y, z, role, name) {
+                // 몸통
+                const geo = new THREE.CylinderGeometry(0.5, 0.5, 1.5, 12);
+                let color = 0xCCCCCC;
+                if(role === 'shop') color = 0xF1C40F; // 노랑
+                if(role === 'chief') color = 0x3498DB; // 파랑
+                if(role === 'boss') color = 0xE74C3C; // 빨강
+                
+                const mat = new THREE.MeshLambertMaterial({ color: color });
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.position.set(x, y + 0.75, z);
+                mesh.castShadow = true;
+
+                // 머리
+                const headGeo = new THREE.SphereGeometry(0.4, 12, 12);
+                const headMat = new THREE.MeshLambertMaterial({ color: 0xFFE0BD });
+                const head = new THREE.Mesh(headGeo, headMat);
+                head.position.y = 1.0;
+                mesh.add(head);
+
+                // 마왕 뿔
+                if(role === 'boss') {
+                    mesh.scale.set(1.5, 1.5, 1.5);
+                    headMat.color.setHex(0x333333);
+                }
+
+                mesh.userData = { type: 'npc', role: role, name: name };
+                this.scene.add(mesh);
+                this.interactables.push(mesh);
                 this.objects.push(mesh);
             }
 
             createTree(x, y, z) {
                 const group = new THREE.Group();
                 group.position.set(x, y, z);
-                
-                // 자원 데이터는 그룹에 할당
                 group.userData = { type: 'resource', resource: 'wood' };
 
-                // 줄기
-                const trunkGeo = new THREE.CylinderGeometry(0.3, 0.4, 1.5, 6);
-                const trunkMat = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
-                const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+                const trunk = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.3, 0.4, 1.5, 6),
+                    new THREE.MeshLambertMaterial({ color: 0x8B4513 })
+                );
                 trunk.position.y = 0.75;
-                trunk.userData = { parent: group }; // 부모 참조
+                trunk.userData = { parent: group };
                 group.add(trunk);
 
-                // 잎
-                const leavesGeo = new THREE.ConeGeometry(1.2, 2.5, 8);
-                const leavesMat = new THREE.MeshLambertMaterial({ color: 0x228B22 });
-                const leaves = new THREE.Mesh(leavesGeo, leavesMat);
+                const leaves = new THREE.Mesh(
+                    new THREE.ConeGeometry(1.2, 2.5, 8),
+                    new THREE.MeshLambertMaterial({ color: 0x228B22 })
+                );
                 leaves.position.y = 2;
-                leaves.userData = { parent: group }; // 부모 참조
+                leaves.userData = { parent: group };
                 group.add(leaves);
 
                 this.scene.add(group);
-                
-                // 물리 충돌체에 두 파트 모두 추가 (어디를 밟아도 채집되도록)
                 this.objects.push(trunk);
                 this.objects.push(leaves);
             }
 
             createRock(x, y, z) {
-                const geo = new THREE.DodecahedronGeometry(0.8, 0);
-                const mat = new THREE.MeshLambertMaterial({ color: 0x808080 });
-                const mesh = new THREE.Mesh(geo, mat);
+                const mesh = new THREE.Mesh(
+                    new THREE.DodecahedronGeometry(0.8, 0),
+                    new THREE.MeshLambertMaterial({ color: 0x808080 })
+                );
                 mesh.position.set(x, y + 0.6, z);
                 mesh.scale.set(1.5, 1, 1.5);
                 mesh.castShadow = true;
-                mesh.receiveShadow = true;
-                
-                mesh.userData = { type: 'resource', resource: 'stone', parent: mesh }; // 자기 자신이 부모
+                mesh.userData = { type: 'resource', resource: 'stone', parent: mesh };
                 this.scene.add(mesh);
                 this.objects.push(mesh);
             }
-
-            createNPC(x, y, z, role, name) {
-                // r128에서 CapsuleGeometry가 없으므로 Cylinder로 대체
-                const geo = new THREE.CylinderGeometry(0.5, 0.5, 1.5, 8);
-                const mat = new THREE.MeshLambertMaterial({ color: role === 'shop' ? 0xFFD700 : 0xFF69B4 });
-                const mesh = new THREE.Mesh(geo, mat);
-                mesh.position.set(x, y + 1, z);
-                mesh.castShadow = true;
-                
-                const headGeo = new THREE.SphereGeometry(0.4, 8, 8);
-                const headMat = new THREE.MeshLambertMaterial({ color: 0xFFE0BD });
-                const head = new THREE.Mesh(headGeo, headMat);
-                head.position.y = 0.9;
-                mesh.add(head);
-
-                mesh.userData = { type: 'npc', role: role, name: name };
-                this.scene.add(mesh);
-                this.interactables.push(mesh);
-                this.objects.push(mesh); // NPC도 밟고 올라갈 수 있음
+            
+            createBossEffect(x, y, z) {
+                for(let i=0; i<20; i++) {
+                    const p = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.2, 0.2, 0.2),
+                        new THREE.MeshBasicMaterial({ color: 0xFF0000 })
+                    );
+                    p.position.set(x + (Math.random()-0.5)*5, y + Math.random()*5, z + (Math.random()-0.5)*5);
+                    this.scene.add(p);
+                }
             }
 
+            // --- 입력 시스템 ---
             setupInputs() {
                 const touchLeft = document.getElementById('touch-left');
                 const touchRight = document.getElementById('touch-right');
@@ -503,7 +517,7 @@
                 let joystickId = null;
                 let startX = 0, startY = 0;
 
-                // Joystick
+                // 1. 조이스틱 (좌측)
                 touchLeft.addEventListener('touchstart', (e) => {
                     e.preventDefault();
                     if(!this.isPlaying || joystickId !== null) return;
@@ -556,9 +570,11 @@
                 touchLeft.addEventListener('touchend', endJoystick);
                 touchLeft.addEventListener('touchcancel', endJoystick);
 
-                // Camera
+                // 2. 카메라 (우측) - 버튼 클릭 제외
                 let lastCamX = 0, lastCamY = 0;
                 touchRight.addEventListener('touchstart', (e) => {
+                    // 상호작용 버튼 위면 무시
+                    if(e.target.id === 'btn-interact-action') return;
                     e.preventDefault();
                     if(!this.isPlaying) return;
                     lastCamX = e.changedTouches[0].clientX;
@@ -566,6 +582,7 @@
                 }, {passive: false});
 
                 touchRight.addEventListener('touchmove', (e) => {
+                    if(e.target.id === 'btn-interact-action') return;
                     e.preventDefault();
                     if(!this.isPlaying) return;
                     const t = e.changedTouches[0];
@@ -576,32 +593,45 @@
                     lastCamY = t.clientY;
                 }, {passive: false});
 
-                // PC Controls
+                // 3. 상호작용 버튼
+                this.interactBtn.addEventListener('click', (e) => {
+                    e.stopPropagation(); // 이벤트 전파 방지
+                    this.interact();
+                });
+                
+                // 모바일 터치 대응
+                this.interactBtn.addEventListener('touchstart', (e) => {
+                    e.stopPropagation();
+                    this.interact();
+                });
+
+                // 4. PC Controls
                 document.addEventListener('keydown', (e) => {
                     if(!this.isPlaying) return;
                     switch(e.key.toLowerCase()) {
-                        case 'w': case 'arrowup': this.input.z = -1; break;
-                        case 's': case 'arrowdown': this.input.z = 1; break;
-                        case 'a': case 'arrowleft': this.input.x = -1; break;
-                        case 'd': case 'arrowright': this.input.x = 1; break;
+                        case 'w': this.input.z = -1; break;
+                        case 's': this.input.z = 1; break;
+                        case 'a': this.input.x = -1; break;
+                        case 'd': this.input.x = 1; break;
                         case 'e': this.interact(); break;
                     }
                 });
                 document.addEventListener('keyup', (e) => {
                     switch(e.key.toLowerCase()) {
-                        case 'w': case 's': case 'arrowup': case 'arrowdown': this.input.z = 0; break;
-                        case 'a': case 'd': case 'arrowleft': case 'arrowright': this.input.x = 0; break;
+                        case 'w': case 's': this.input.z = 0; break;
+                        case 'a': case 'd': this.input.x = 0; break;
                     }
                 });
-
+                
+                // PC 마우스 드래그
                 let isMouseDown = false;
                 document.addEventListener('mousedown', (e) => {
-                    if(!this.isPlaying || e.target.tagName === 'BUTTON') return;
-                    if (!('ontouchstart' in window)) {
-                        isMouseDown = true;
-                        lastCamX = e.clientX;
-                        lastCamY = e.clientY;
-                    }
+                   if(!this.isPlaying || e.target.tagName === 'BUTTON' || e.target.id === 'btn-interact-action') return;
+                   if(!('ontouchstart' in window)) {
+                       isMouseDown = true;
+                       lastCamX = e.clientX;
+                       lastCamY = e.clientY;
+                   }
                 });
                 document.addEventListener('mousemove', (e) => {
                     if(isMouseDown) {
@@ -619,25 +649,25 @@
                 this.cameraState.pitch = Math.max(0.1, Math.min(Math.PI/2 - 0.1, this.cameraState.pitch + dy * sensitivity));
             }
 
+            // --- 게임 로직 ---
             updatePhysics() {
-                // Gravity
+                // 중력
                 this.velocity.y -= this.config.gravity;
                 this.ball.position.add(this.velocity);
 
-                // Move
+                // 이동 (카메라 방향 기준)
                 const camAngle = this.cameraState.yaw;
                 const targetVX = (this.input.x * Math.cos(camAngle) + this.input.z * Math.sin(camAngle)) * this.config.moveSpeed;
                 const targetVZ = (this.input.x * -Math.sin(camAngle) + this.input.z * Math.cos(camAngle)) * this.config.moveSpeed;
                 this.velocity.x += (targetVX - this.velocity.x) * 0.1;
                 this.velocity.z += (targetVZ - this.velocity.z) * 0.1;
 
-                // Collision
+                // 충돌
                 const raycaster = new THREE.Raycaster();
                 raycaster.set(this.ball.position, new THREE.Vector3(0, -1, 0));
-                
                 const intersects = raycaster.intersectObjects(this.objects);
+                
                 let shadowY = -100;
-
                 if (intersects.length > 0) {
                     const hit = intersects[0];
                     shadowY = hit.point.y + 0.05;
@@ -646,112 +676,116 @@
                         this.velocity.y = this.config.bounceForce;
                         this.ball.position.y = hit.point.y + this.config.ballRadius;
                         
+                        // 스쿼시 효과
                         this.ball.scale.set(1.3, 0.7, 1.3);
                         setTimeout(() => this.ball.scale.set(1, 1, 1), 100);
-                        
-                        // Check Resource
-                        // hit.object might be a child mesh, we need userData from it or its parent
+
+                        // 자원 채집
                         let target = hit.object;
-                        if (!target.userData.type && target.userData.parent) {
-                            target = target.userData.parent;
-                        }
-                        
-                        if (target.userData.type === 'resource') {
-                            this.gatherResource(target, hit.object);
-                        }
+                        if (!target.userData.type && target.userData.parent) target = target.userData.parent;
+                        if (target.userData.type === 'resource') this.gatherResource(target);
                     }
                 }
                 
                 this.ballShadow.position.set(this.ball.position.x, shadowY, this.ball.position.z);
                 this.ballShadow.visible = shadowY > -10;
 
-                if (this.ball.position.y < -5) {
+                // 낙사
+                if (this.ball.position.y < -10) {
                     this.ball.position.set(0, 10, 0);
                     this.velocity.set(0, 0, 0);
-                    this.showToast("물에 빠져서 마을로 돌아왔습니다.");
+                    this.showToast("물에 빠져 마을로 돌아왔습니다.");
                 }
 
+                // NPC 체크
                 this.checkNPCs();
 
+                // 공 회전
                 this.ball.rotation.x -= this.velocity.z * 1.5;
                 this.ball.rotation.z += this.velocity.x * 1.5;
             }
 
-            gatherResource(groupOrMesh, hitMesh) {
-                const type = groupOrMesh.userData.resource;
+            gatherResource(obj) {
+                const type = obj.userData.resource;
+                // 자원 증가
+                if (type === 'wood') this.resources.wood++;
+                if (type === 'stone') this.resources.stone++;
                 
-                // 파티클
-                this.createExplosion(this.ball.position, type === 'wood' ? 0x8B4513 : 0x808080);
-                this.createFloatingText(this.ball.position, type === 'wood' ? "+1 나무" : "+1 돌");
+                // UI 업데이트
+                this.updateUI();
+                this.showToast(`${type === 'wood' ? '나무' : '돌'} 획득!`);
 
-                if (type === 'wood') {
-                    this.resources.wood++;
-                    this.uiWood.innerText = this.resources.wood;
-                } else if (type === 'stone') {
-                    this.resources.stone++;
-                    this.uiStone.innerText = this.resources.stone;
-                }
-
-                // 일시적으로 제거
-                this.scene.remove(groupOrMesh);
+                // 제거 및 리젠
+                this.scene.remove(obj);
                 
-                // 물리 충돌체 목록에서 제거 (그룹인 경우 자식들을 모두 찾아 제거해야 함)
-                // hitMesh는 실제로 부딪힌 녀석이지만, 나무의 경우 줄기와 잎 모두 제거해야 함.
-                // 편의상 그룹 내부의 모든 메쉬를 objects에서 뺌
-                let childrenToRemove = [];
-                groupOrMesh.traverse((child) => {
-                    if (child.isMesh && this.objects.includes(child)) {
-                        childrenToRemove.push(child);
-                    }
-                });
-                // 만약 groupOrMesh 자체가 메쉬라면
-                if (groupOrMesh.isMesh && this.objects.includes(groupOrMesh)) {
-                    childrenToRemove.push(groupOrMesh);
-                }
+                // 충돌체 목록에서 제거 (임시)
+                let tempRemoved = [];
+                obj.traverse((child) => { if(this.objects.includes(child)) tempRemoved.push(child); });
+                if(this.objects.includes(obj)) tempRemoved.push(obj);
+                this.objects = this.objects.filter(o => !tempRemoved.includes(o));
 
-                this.objects = this.objects.filter(obj => !childrenToRemove.includes(obj));
-
-                // 리젠
                 setTimeout(() => {
-                    this.scene.add(groupOrMesh);
-                    childrenToRemove.forEach(child => this.objects.push(child));
+                    this.scene.add(obj);
+                    tempRemoved.forEach(o => this.objects.push(o));
                 }, 5000);
             }
 
             checkNPCs() {
-                let nearNPC = null;
+                let closest = null;
+                let minDist = 4; // 대화 가능 거리
+
                 for(let obj of this.interactables) {
                     if(obj.userData.type === 'npc') {
                         const dist = this.ball.position.distanceTo(obj.position);
-                        if(dist < 3) {
-                            nearNPC = obj;
-                            break;
+                        if(dist < minDist) {
+                            minDist = dist;
+                            closest = obj;
                         }
                     }
                 }
 
-                if(nearNPC !== this.activeNPC) {
-                    this.activeNPC = nearNPC;
-                    if(nearNPC) {
-                        this.interactionText.innerText = nearNPC.userData.name;
-                        this.interactionUI.classList.add('visible');
+                if(closest !== this.activeNPC) {
+                    this.activeNPC = closest;
+                    if(closest) {
+                        this.interactBtn.classList.add('active');
+                        this.showToast(`[${closest.userData.name}] 대화 가능`);
                     } else {
-                        this.interactionUI.classList.remove('visible');
+                        this.interactBtn.classList.remove('active');
                     }
                 }
             }
 
             interact() {
                 if(!this.activeNPC) return;
-                const data = this.activeNPC.userData;
+                const role = this.activeNPC.userData.role;
 
-                if(data.role === 'shop') {
-                    this.shopModal.style.display = 'block';
+                if(role === 'shop') {
+                    document.getElementById('shop-modal').style.display = 'block';
                     this.isPlaying = false;
-                } else {
-                    document.getElementById('dialogue-name').innerText = data.name;
-                    document.getElementById('dialogue-text').innerText = "안녕! 숲과 광산에서 자원을 모아오면 상점에서 좋은 물건으로 바꿔줄게!";
-                    this.dialogueModal.style.display = 'block';
+                } else if(role === 'chief') {
+                    const modal = document.getElementById('dialogue-modal');
+                    const title = document.getElementById('npc-name');
+                    const text = document.getElementById('npc-text');
+                    
+                    title.innerText = "촌장";
+                    modal.style.display = 'block';
+                    this.isPlaying = false;
+
+                    if(this.questStep === 0) {
+                        text.innerText = "자네가 전설의 용사인가? 북쪽 숲 너머 마왕이 나타났네! 하지만 지금 실력으론 어림없지. 자원을 모아 '상인'에게 가서 힘을 기르게!";
+                        this.questBox.innerText = "📜 목표: 자원을 모아 점프력 강화하기";
+                        this.questStep = 1;
+                    } else if(this.questStep === 1) {
+                        text.innerText = "아직 준비가 안 됐군. 나무와 돌을 모아 상인에게 파시게. 그리고 점프력을 강화해서 오게나.";
+                    } else if(this.questStep === 2) {
+                        text.innerText = "오! 힘이 느껴지는군. 이제 북쪽 숲 징검다리를 건너 마왕성에 갈 수 있을 걸세. 부디 조심하게!";
+                        this.questBox.innerText = "📜 목표: 북쪽 마왕성으로 가서 마왕 무찌르기";
+                        this.questStep = 3;
+                    } else {
+                        text.innerText = "마왕을 물리쳐 주게!";
+                    }
+                } else if(role === 'boss') {
+                    document.getElementById('ending-modal').style.display = 'block';
                     this.isPlaying = false;
                 }
             }
@@ -760,44 +794,35 @@
                 if(this.resources.wood >= 5 && this.resources.stone >= 5) {
                     this.resources.wood -= 5;
                     this.resources.stone -= 5;
-                    this.resources.gold += 10;
+                    this.resources.gold += 30;
                     this.updateUI();
-                    this.showToast("자원을 팔아 10골드를 얻었습니다!");
+                    this.showToast("자원을 팔아 30골드를 얻었습니다.");
                 } else {
                     this.showToast("나무와 돌이 5개씩 필요합니다.");
                 }
             }
 
             upgradeJump() {
-                if(this.resources.gold >= 50) {
-                    this.resources.gold -= 50;
-                    this.config.bounceForce += 0.05;
+                if(this.resources.gold >= 100) {
+                    this.resources.gold -= 100;
+                    this.config.bounceForce += 0.15; // 대폭 상승
                     this.updateUI();
-                    this.showToast("점프력이 강화되었습니다!");
+                    this.showToast("점프력이 대폭 강화되었습니다! 이제 마왕성에 갈 수 있습니다.");
+                    if(this.questStep === 1) this.questStep = 2; // 퀘스트 진행
+                    this.questBox.innerText = "📜 목표: 촌장님께 다시 가보세요.";
                 } else {
-                    this.showToast("골드가 부족합니다.");
-                }
-            }
-
-            upgradeSpeed() {
-                if(this.resources.gold >= 50) {
-                    this.resources.gold -= 50;
-                    this.config.moveSpeed += 0.02;
-                    this.updateUI();
-                    this.showToast("이동속도가 빨라졌습니다!");
-                } else {
-                    this.showToast("골드가 부족합니다.");
+                    this.showToast("100골드가 필요합니다.");
                 }
             }
 
             closeShop() {
-                this.shopModal.style.display = 'none';
+                document.getElementById('shop-modal').style.display = 'none';
                 this.isPlaying = true;
                 this.input.x = 0; this.input.z = 0;
             }
 
             closeDialogue() {
-                this.dialogueModal.style.display = 'none';
+                document.getElementById('dialogue-modal').style.display = 'none';
                 this.isPlaying = true;
             }
 
@@ -808,65 +833,16 @@
             }
 
             showToast(msg) {
-                this.toastEl.innerText = msg;
-                this.toastEl.style.opacity = 1;
-                setTimeout(() => { this.toastEl.style.opacity = 0; }, 2000);
-            }
-
-            createExplosion(pos, color) {
-                const count = 5;
-                for(let i=0; i<count; i++) {
-                    const geo = new THREE.BoxGeometry(0.2, 0.2, 0.2);
-                    const mat = new THREE.MeshBasicMaterial({ color: color });
-                    const mesh = new THREE.Mesh(geo, mat);
-                    mesh.position.copy(pos);
-                    mesh.userData = { 
-                        vel: new THREE.Vector3((Math.random()-0.5)*0.3, Math.random()*0.3, (Math.random()-0.5)*0.3),
-                        life: 1.0 
-                    };
-                    this.scene.add(mesh);
-                    this.particles.push(mesh);
-                }
-            }
-
-            createFloatingText(pos, text) {
-                const div = document.createElement('div');
-                div.className = 'floating-text';
-                div.innerText = text;
-                
-                // 3D 위치를 2D 화면 좌표로 변환
-                const vector = pos.clone();
-                vector.project(this.camera);
-                
-                const x = (vector.x * .5 + .5) * window.innerWidth;
-                const y = (-(vector.y * .5) + .5) * window.innerHeight;
-                
-                div.style.left = `${x}px`;
-                div.style.top = `${y}px`;
-                
-                document.getElementById('ui-layer').appendChild(div);
-                
-                setTimeout(() => div.remove(), 1000);
-            }
-
-            updateParticles() {
-                for(let i=this.particles.length-1; i>=0; i--) {
-                    const p = this.particles[i];
-                    p.position.add(p.userData.vel);
-                    p.userData.life -= 0.05;
-                    p.scale.setScalar(p.userData.life);
-                    if(p.userData.life <= 0) {
-                        this.scene.remove(p);
-                        this.particles.splice(i, 1);
-                    }
-                }
+                const toast = document.getElementById('toast');
+                toast.innerText = msg;
+                toast.style.opacity = 1;
+                setTimeout(() => { toast.style.opacity = 0; }, 2000);
             }
 
             updateCamera() {
                 const cx = this.ball.position.x + this.cameraState.dist * Math.cos(this.cameraState.pitch) * Math.sin(this.cameraState.yaw);
                 const cz = this.ball.position.z + this.cameraState.dist * Math.cos(this.cameraState.pitch) * Math.cos(this.cameraState.yaw);
                 const cy = this.ball.position.y + this.cameraState.dist * Math.sin(this.cameraState.pitch);
-
                 this.camera.position.lerp(new THREE.Vector3(cx, cy, cz), 0.1);
                 this.camera.lookAt(this.ball.position);
             }
@@ -879,18 +855,8 @@
 
             animate() {
                 requestAnimationFrame(() => this.animate());
-
-                if (this.isPlaying) {
-                    this.updatePhysics();
-                    this.updateParticles();
-                } else {
-                    if(this.ball) {
-                        this.ball.position.y = 5 + Math.sin(Date.now() * 0.002) * 0.5;
-                        this.ball.rotation.y += 0.01;
-                    }
-                }
-                
-                if(this.ball) this.updateCamera();
+                if (this.isPlaying) this.updatePhysics();
+                if (this.ball) this.updateCamera();
                 this.renderer.render(this.scene, this.camera);
             }
         }
