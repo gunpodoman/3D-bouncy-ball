@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>3D Bounce Ball Adventure</title>
+    <title>Bounce Ball RPG</title>
     <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
     <style>
         body {
             margin: 0;
             overflow: hidden;
-            background-color: #87CEEB; /* 하늘색 배경 */
+            background-color: #87CEEB;
             font-family: 'Jua', sans-serif;
-            touch-action: none; /* 모바일 터치 스크롤 방지 */
+            touch-action: none;
             user-select: none;
             -webkit-user-select: none;
         }
@@ -22,144 +22,193 @@
             display: block;
         }
 
-        /* UI 오버레이 */
+        /* --- UI 레이어 --- */
         #ui-layer {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            pointer-events: none; /* UI 레이어 자체는 터치 통과 */
+            pointer-events: none;
             z-index: 10;
         }
 
-        .header {
+        /* 자원 표시줄 */
+        .resource-bar {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            padding: 20px;
-            box-sizing: border-box;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
             display: flex;
-            justify-content: space-between;
+            gap: 15px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 10px 25px;
+            border-radius: 30px;
             color: white;
-            text-shadow: 2px 2px 0px rgba(0,0,0,0.3);
-            font-size: 24px;
-            pointer-events: none;
+            font-size: 18px;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
 
-        /* --- 모바일 컨트롤 영역 --- */
-        
-        /* 1. 이동 조이스틱 영역 (좌측 하단) */
-        #joystick-zone {
+        .res-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* 조이스틱 */
+        #joystick-base {
             position: absolute;
-            bottom: 30px;
-            left: 30px;
-            width: 160px;
-            height: 160px;
-            background: rgba(255, 255, 255, 0.1);
+            width: 120px;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.2);
             border-radius: 50%;
-            border: 2px dashed rgba(255, 255, 255, 0.3);
-            pointer-events: auto; /* 터치 가능 */
-            display: none; /* JS에서 활성화 */
-            touch-action: none;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            display: none;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
         }
 
         #joystick-knob {
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 60px;
-            height: 60px;
-            background: rgba(255, 255, 255, 0.8);
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.9);
             border-radius: 50%;
             transform: translate(-50%, -50%);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            pointer-events: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
 
-        /* 2. 카메라 조작 영역 (우측 전체) */
-        #camera-zone {
+        /* 상호작용 버튼 */
+        #interaction-ui {
             position: absolute;
-            top: 0;
-            right: 0;
-            width: 50%; /* 화면 오른쪽 절반 */
-            height: 100%;
-            pointer-events: auto; /* 터치 가능 */
-            display: none; /* JS에서 활성화 */
-            touch-action: none;
-            /* background: rgba(255, 0, 0, 0.1); 디버깅용 */
-        }
-
-        /* --- 메시지 화면 (최상단) --- */
-        #message-screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            backdrop-filter: blur(5px);
-            z-index: 100; /* 가장 위에 배치 */
-            transition: opacity 0.3s;
-            pointer-events: auto;
-        }
-
-        h1 {
-            color: #fff;
-            font-size: 48px;
-            margin: 0;
-            text-shadow: 0 5px 0 #333;
-            letter-spacing: 2px;
+            bottom: 150px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 15px;
             text-align: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none; /* 보일 때만 auto로 변경 */
+        }
+        
+        #interaction-ui.visible {
+            opacity: 1;
+            pointer-events: auto;
+            animation: bounceIn 0.3s;
         }
 
-        .level-text {
-            color: #ffeb3b;
-            font-size: 24px;
-            margin-bottom: 30px;
+        .btn-action {
+            background: #FFD700;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            color: #333;
+            font-family: 'Jua', sans-serif;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 5px;
+            font-weight: bold;
         }
 
-        button {
-            background: #ff6b6b;
+        /* 대화창 & 상점 모달 (공통 스타일) */
+        .modal {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            padding: 25px;
+            border-radius: 20px;
+            width: 320px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: none;
+            pointer-events: auto;
+            text-align: center;
+            color: #333;
+            z-index: 50;
+        }
+        
+        .modal h2 { margin-top: 0; color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .modal p { font-size: 18px; line-height: 1.5; color: #555; }
+
+        .shop-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 15px;
+        }
+
+        .btn-buy {
+            background: #4CAF50;
             color: white;
             border: none;
-            padding: 15px 50px;
-            font-size: 24px;
-            font-family: 'Jua', sans-serif;
-            border-radius: 50px;
+            padding: 6px 12px;
+            border-radius: 6px;
             cursor: pointer;
-            box-shadow: 0 6px 0 #c0392b;
-            transition: transform 0.1s, box-shadow 0.1s;
-            pointer-events: auto; /* 명시적 클릭 허용 */
         }
+        .btn-buy:hover { background: #45a049; }
 
-        button:active {
-            transform: translateY(6px);
-            box-shadow: 0 0 0 #c0392b;
-        }
-
-        .hidden {
-            opacity: 0;
-            pointer-events: none !important;
-        }
-
-        #tutorial {
-            position: absolute;
-            bottom: 20px;
-            width: 100%;
-            text-align: center;
+        .btn-close {
+            margin-top: 20px;
+            background: #f44336;
             color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 8px;
+            cursor: pointer;
             font-size: 16px;
-            text-shadow: 1px 1px 2px black;
-            opacity: 0.8;
-            pointer-events: none;
-            z-index: 5;
         }
+
+        /* 토스트 메시지 (알림) */
+        #toast {
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 20px;
+            opacity: 0;
+            transition: opacity 0.5s;
+            pointer-events: none;
+            font-size: 16px;
+            white-space: nowrap;
+        }
+
+        /* 플로팅 텍스트 (자원 획득 시) */
+        .floating-text {
+            position: absolute;
+            color: #FFD700;
+            font-weight: bold;
+            font-size: 20px;
+            text-shadow: 1px 1px 0 #000;
+            pointer-events: none;
+            animation: floatUp 1s forwards;
+        }
+
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-50px); }
+        }
+
+        @keyframes bounceIn {
+            0% { transform: translateX(-50%) scale(0.8); }
+            100% { transform: translateX(-50%) scale(1); }
+        }
+
+        /* 터치 영역 */
+        #touch-left { position: absolute; top: 0; left: 0; width: 50%; height: 100%; pointer-events: auto; }
+        #touch-right { position: absolute; top: 0; right: 0; width: 50%; height: 100%; pointer-events: auto; }
+
     </style>
 </head>
 <body>
@@ -167,536 +216,686 @@
     <div id="game-container"></div>
 
     <div id="ui-layer">
-        <div class="header">
-            <div id="level-display">Level 1</div>
-            <div id="star-display">⭐ 0/3</div>
+        <!-- 자원 표시 -->
+        <div class="resource-bar">
+            <div class="res-item">🪵 <span id="res-wood">0</span></div>
+            <div class="res-item">🪨 <span id="res-stone">0</span></div>
+            <div class="res-item">💰 <span id="res-gold">0</span></div>
         </div>
-        
-        <!-- 컨트롤러들 -->
-        <div id="joystick-zone">
+
+        <!-- 알림 메시지 -->
+        <div id="toast">알림 메시지</div>
+
+        <!-- 상호작용 버튼 -->
+        <div id="interaction-ui">
+            <div id="interaction-text">NPC 이름</div>
+            <button class="btn-action" id="btn-interact">대화하기</button>
+        </div>
+
+        <!-- 조이스틱 -->
+        <div id="joystick-base">
             <div id="joystick-knob"></div>
         </div>
-        <div id="camera-zone"></div>
 
-        <div id="tutorial" class="hidden">
-            PC: WASD 이동 / 마우스 드래그 시점
-        </div>
+        <!-- 터치 입력 영역 -->
+        <div id="touch-left"></div>
+        <div id="touch-right"></div>
     </div>
 
-    <!-- 메뉴 화면 -->
-    <div id="message-screen">
-        <h1>BOUNCE<br>ADVENTURE</h1>
-        <div class="level-text" id="msg-sub">3D Platformer</div>
-        <button id="start-btn">GAME START</button>
+    <!-- 대화창 모달 -->
+    <div id="dialogue-modal" class="modal">
+        <h2 id="dialogue-name">NPC</h2>
+        <p id="dialogue-text">대화 내용</p>
+        <button class="btn-close" onclick="game.closeDialogue()">확인</button>
+    </div>
+
+    <!-- 상점 모달 -->
+    <div id="shop-modal" class="modal">
+        <h2>🛠️ 숲속 상점</h2>
+        <div class="shop-item">
+            <span>🪵🪨 자원 판매 (각 5개 → 10G)</span>
+            <button class="btn-buy" onclick="game.sellResources()">판매</button>
+        </div>
+        <div class="shop-item">
+            <span>🚀 점프력 강화 (50G)</span>
+            <button class="btn-buy" onclick="game.upgradeJump()">강화</button>
+        </div>
+        <div class="shop-item">
+            <span>⚡ 이동속도 강화 (50G)</span>
+            <button class="btn-buy" onclick="game.upgradeSpeed()">강화</button>
+        </div>
+        <button class="btn-close" onclick="game.closeShop()">닫기</button>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
-        // --- 게임 설정 ---
-        const CONFIG = {
-            gravity: 0.015,       // 중력
-            bounceForce: 0.35,    // 기본 점프력
-            highBounceForce: 0.6, // 점프대 점프력
-            moveSpeed: 0.12,      // 이동 속도
-            ballRadius: 0.4,
-            shadowMapSize: 1024
-        };
-
-        // --- 전역 변수 ---
-        let scene, camera, renderer;
-        let ball, ballShadow;
-        let platforms = [];
-        let stars = [];
-        let goal;
-        
-        // 상태
-        let currentLevel = 1;
-        let isPlaying = false;
-        let starCount = 0;
-        let maxStars = 0;
-        
-        // 물리
-        let velocity = new THREE.Vector3(0, 0, 0);
-        
-        // 입력
-        let input = { x: 0, z: 0 };
-        
-        // 카메라 상태
-        let cameraState = {
-            yaw: 0,          // 좌우 회전
-            pitch: 0.6,      // 상하 회전
-            dist: 10
-        };
-
-        // DOM 요소
-        const uiLevel = document.getElementById('level-display');
-        const uiStars = document.getElementById('star-display');
-        const msgScreen = document.getElementById('message-screen');
-        const startBtn = document.getElementById('start-btn');
-        const msgTitle = document.querySelector('#message-screen h1');
-        const msgSub = document.getElementById('msg-sub');
-        const tutorial = document.getElementById('tutorial');
-        
-        const joystickZone = document.getElementById('joystick-zone');
-        const joystickKnob = document.getElementById('joystick-knob');
-        const cameraZone = document.getElementById('camera-zone');
-
-        // --- 레벨 데이터 ---
-        const LEVELS = {
-            1: [
-                "...........",
-                "...###.....",
-                "..#...#....",
-                ".S..*..G...",
-                "..#...#....",
-                "...###.....",
-                "..........."
-            ],
-            2: [
-                ".....G.....",
-                ".....#.....",
-                "....###....",
-                "...#.*.#...",
-                "..#..^..#..",
-                ".S...#.....",
-                ".....#....."
-            ],
-            3: [
-                "G...###...*",
-                "#...#.#...#",
-                "#...#.#...#",
-                "##^##.##^##",
-                "...........",
-                ".....S.....",
-                ".....#....."
-            ],
-            4: [
-                ".....G.....",
-                "....###....",
-                "...X...X...",
-                "..#..^..#..",
-                ".#...*...#.",
-                "..#..S..#..",
-                "...#####..."
-            ]
-        };
-
-        // --- 초기화 ---
-        function init() {
-            // Scene
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x87CEEB);
-            scene.fog = new THREE.Fog(0x87CEEB, 10, 50);
-
-            // Camera
-            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
-            
-            // Renderer
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-            document.getElementById('game-container').appendChild(renderer.domElement);
-
-            // Light
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-            scene.add(ambientLight);
-
-            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            dirLight.position.set(10, 20, 10);
-            dirLight.castShadow = true;
-            dirLight.shadow.mapSize.width = CONFIG.shadowMapSize;
-            dirLight.shadow.mapSize.height = CONFIG.shadowMapSize;
-            dirLight.shadow.camera.left = -20;
-            dirLight.shadow.camera.right = 20;
-            dirLight.shadow.camera.top = 20;
-            dirLight.shadow.camera.bottom = -20;
-            scene.add(dirLight);
-
-            createBall();
-
-            // 리스너 등록
-            window.addEventListener('resize', onWindowResize);
-            startBtn.addEventListener('click', startGame); // 클릭 이벤트 명시적 연결
-            
-            setupInputs();
-
-            // 모바일 감지 및 UI 설정
-            const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-            if (isMobile) {
-                joystickZone.style.display = 'block';
-                cameraZone.style.display = 'block';
-                tutorial.innerHTML = "좌측 하단: 이동<br>우측 화면: 시점 회전";
-            }
-            tutorial.classList.remove('hidden');
-
-            // 렌더링 시작
-            animate();
-        }
-
-        function createBall() {
-            const geometry = new THREE.SphereGeometry(CONFIG.ballRadius, 32, 32);
-            const material = new THREE.MeshPhongMaterial({ color: 0xFF4500 });
-            ball = new THREE.Mesh(geometry, material);
-            ball.castShadow = true;
-            scene.add(ball);
-
-            // 그림자
-            const shadowGeo = new THREE.CircleGeometry(CONFIG.ballRadius, 16);
-            const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.3 });
-            ballShadow = new THREE.Mesh(shadowGeo, shadowMat);
-            ballShadow.rotation.x = -Math.PI / 2;
-            scene.add(ballShadow);
-        }
-
-        // --- 레벨 로드 ---
-        function loadLevel(levelNum) {
-            // 이전 객체 정리
-            platforms.forEach(p => scene.remove(p));
-            stars.forEach(s => scene.remove(s));
-            if (goal) scene.remove(goal);
-            
-            platforms = [];
-            stars = [];
-            starCount = 0;
-            maxStars = 0;
-            velocity.set(0, 0, 0); // 속도 초기화
-            input.x = 0; input.z = 0; // 입력 초기화
-
-            // 카메라 리셋
-            cameraState.yaw = 0; 
-            
-            const mapData = LEVELS[levelNum] || LEVELS[1];
-            const rows = mapData.length;
-            const cols = mapData[0].length;
-            const tileSize = 1.2;
-            const offsetX = (cols * tileSize) / 2;
-            const offsetZ = (rows * tileSize) / 2;
-
-            for (let z = 0; z < rows; z++) {
-                for (let x = 0; x < cols; x++) {
-                    const char = mapData[z][x];
-                    const posX = x * tileSize - offsetX;
-                    const posZ = z * tileSize - offsetZ;
-
-                    if (char === '.') continue;
-
-                    if (['#', 'S', '*', 'G', '^', 'X'].includes(char)) {
-                        let color = 0x4CAF50;
-                        let type = 'normal';
-                        if (char === '^') { color = 0x2196F3; type = 'jump'; }
-                        if (char === 'X') { color = 0xF44336; type = 'trap'; }
-
-                        const geo = new THREE.BoxGeometry(tileSize, 0.5, tileSize);
-                        const mat = new THREE.MeshLambertMaterial({ color: color });
-                        const mesh = new THREE.Mesh(geo, mat);
-                        mesh.position.set(posX, -0.25, posZ);
-                        mesh.receiveShadow = true;
-                        mesh.userData = { type: type };
-                        scene.add(mesh);
-                        platforms.push(mesh);
-                    }
-
-                    if (char === 'S') {
-                        ball.position.set(posX, 2, posZ); // 시작 위치
-                    } else if (char === '*') {
-                        createStar(posX, posZ);
-                    } else if (char === 'G') {
-                        createGoal(posX, posZ);
-                    }
-                }
-            }
-            uiLevel.innerText = `Level ${levelNum}`;
-            updateStarUI();
-        }
-
-        function createStar(x, z) {
-            const geo = new THREE.OctahedronGeometry(0.3);
-            const mat = new THREE.MeshPhongMaterial({ color: 0xFFD700, emissive: 0xFFAA00, emissiveIntensity: 0.5 });
-            const mesh = new THREE.Mesh(geo, mat);
-            mesh.position.set(x, 0.5, z);
-            mesh.userData = { active: true };
-            mesh.castShadow = true;
-            scene.add(mesh);
-            stars.push(mesh);
-            maxStars++;
-        }
-
-        function createGoal(x, z) {
-            const geo = new THREE.CylinderGeometry(0, 0.5, 1, 4);
-            const mat = new THREE.MeshPhongMaterial({ color: 0xE91E63, transparent: true, opacity: 0.8 });
-            goal = new THREE.Mesh(geo, mat);
-            goal.position.set(x, 0.5, z);
-            scene.add(goal);
-        }
-
-        // --- 입력 처리 (핵심 수정 부분) ---
-        function setupInputs() {
-            // 1. PC 키보드
-            document.addEventListener('keydown', (e) => {
-                if (!isPlaying) return;
-                switch(e.key) {
-                    case 'ArrowUp': case 'w': input.z = -1; break;
-                    case 'ArrowDown': case 's': input.z = 1; break;
-                    case 'ArrowLeft': case 'a': input.x = -1; break;
-                    case 'ArrowRight': case 'd': input.x = 1; break;
-                }
-            });
-            document.addEventListener('keyup', (e) => {
-                switch(e.key) {
-                    case 'ArrowUp': case 'w': case 'ArrowDown': case 's': input.z = 0; break;
-                    case 'ArrowLeft': case 'a': case 'ArrowRight': case 'd': input.x = 0; break;
-                }
-            });
-
-            // 2. PC 마우스 드래그 (시점)
-            let isMouseDown = false;
-            let lastMouseX = 0, lastMouseY = 0;
-            
-            document.addEventListener('mousedown', (e) => {
-                if (!isPlaying || e.target.tagName === 'BUTTON') return;
-                isMouseDown = true;
-                lastMouseX = e.clientX;
-                lastMouseY = e.clientY;
-            });
-            
-            document.addEventListener('mousemove', (e) => {
-                if (isMouseDown) {
-                    rotateCamera(e.clientX - lastMouseX, e.clientY - lastMouseY);
-                    lastMouseX = e.clientX;
-                    lastMouseY = e.clientY;
-                }
-            });
-            
-            document.addEventListener('mouseup', () => isMouseDown = false);
-
-            // 3. 모바일 조이스틱 (Touch) - joystickZone에만 이벤트 리스너 추가
-            let joystickId = null;
-
-            joystickZone.addEventListener('touchstart', (e) => {
-                e.preventDefault(); // 기본 동작 방지
-                if (!isPlaying) return;
+        class Game {
+            constructor() {
+                this.config = {
+                    gravity: 0.015,
+                    bounceForce: 0.35,
+                    moveSpeed: 0.12,
+                    ballRadius: 0.4
+                };
                 
-                const t = e.changedTouches[0];
-                joystickId = t.identifier;
-                updateJoystick(t);
-            }, { passive: false });
+                this.resources = { wood: 0, stone: 0, gold: 0 };
+                
+                this.scene = null;
+                this.camera = null;
+                this.renderer = null;
+                this.ball = null;
+                this.ballShadow = null;
+                
+                this.objects = []; // 물리 충돌체 목록
+                this.interactables = []; // 상호작용(NPC) 목록
+                this.particles = [];
+                this.floatingTexts = [];
+                
+                this.velocity = new THREE.Vector3(0, 0, 0);
+                this.input = { x: 0, z: 0 };
+                this.cameraState = { yaw: 0, pitch: 0.6, dist: 12 };
+                
+                this.isPlaying = false;
+                this.activeNPC = null;
 
-            joystickZone.addEventListener('touchmove', (e) => {
-                e.preventDefault();
-                if (!isPlaying) return;
+                // DOM Elements
+                this.uiWood = document.getElementById('res-wood');
+                this.uiStone = document.getElementById('res-stone');
+                this.uiGold = document.getElementById('res-gold');
+                this.interactionUI = document.getElementById('interaction-ui');
+                this.interactionText = document.getElementById('interaction-text');
+                this.shopModal = document.getElementById('shop-modal');
+                this.dialogueModal = document.getElementById('dialogue-modal');
+                this.toastEl = document.getElementById('toast');
+                
+                this.joystickBase = document.getElementById('joystick-base');
+                this.joystickKnob = document.getElementById('joystick-knob');
+                
+                // 생성자에서 init을 호출하여 초기화 시작
+                this.init();
+            }
 
-                for(let i=0; i<e.changedTouches.length; i++) {
-                    if (e.changedTouches[i].identifier === joystickId) {
-                        updateJoystick(e.changedTouches[i]);
-                        break;
+            init() {
+                // Scene
+                this.scene = new THREE.Scene();
+                this.scene.background = new THREE.Color(0x87CEEB);
+                this.scene.fog = new THREE.Fog(0x87CEEB, 20, 80);
+
+                // Camera
+                this.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+                
+                // Renderer
+                this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.shadowMap.enabled = true;
+                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                document.getElementById('game-container').appendChild(this.renderer.domElement);
+
+                // Lights
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                this.scene.add(ambientLight);
+
+                const dirLight = new THREE.DirectionalLight(0xffffff, 0.7);
+                dirLight.position.set(20, 40, 20);
+                dirLight.castShadow = true;
+                dirLight.shadow.mapSize.width = 2048;
+                dirLight.shadow.mapSize.height = 2048;
+                dirLight.shadow.camera.left = -40;
+                dirLight.shadow.camera.right = 40;
+                dirLight.shadow.camera.top = 40;
+                dirLight.shadow.camera.bottom = -40;
+                this.scene.add(dirLight);
+
+                this.createPlayer();
+                this.generateWorld();
+                this.setupInputs();
+                
+                window.addEventListener('resize', () => this.onResize());
+                document.getElementById('btn-interact').addEventListener('click', () => this.interact());
+
+                // 즉시 게임 시작
+                this.isPlaying = true;
+                this.showToast("게임이 시작되었습니다! 자원을 모아보세요.");
+                
+                this.animate();
+            }
+
+            createPlayer() {
+                const geo = new THREE.SphereGeometry(this.config.ballRadius, 32, 32);
+                const mat = new THREE.MeshPhongMaterial({ color: 0xFF4500 });
+                this.ball = new THREE.Mesh(geo, mat);
+                this.ball.position.set(0, 5, 0);
+                this.ball.castShadow = true;
+                this.scene.add(this.ball);
+
+                const shadowGeo = new THREE.CircleGeometry(this.config.ballRadius, 16);
+                const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.3 });
+                this.ballShadow = new THREE.Mesh(shadowGeo, shadowMat);
+                this.ballShadow.rotation.x = -Math.PI / 2;
+                this.scene.add(this.ballShadow);
+            }
+
+            generateWorld() {
+                // 바닥
+                const groundGeo = new THREE.CylinderGeometry(40, 40, 10, 64);
+                const groundMat = new THREE.MeshLambertMaterial({ color: 0x4CAF50 });
+                const ground = new THREE.Mesh(groundGeo, groundMat);
+                ground.position.y = -5;
+                ground.receiveShadow = true;
+                this.scene.add(ground);
+                this.objects.push(ground);
+
+                // 건물
+                this.createBuilding(5, 0, 5, 0x8B4513);
+                this.createBuilding(-5, 0, 8, 0xA0522D);
+                
+                // NPC
+                this.createNPC(2, 0, 2, 'shop', '잡화점 주인');
+                this.createNPC(-3, 0, -3, 'quest', '마을 촌장');
+
+                // 나무 (30개)
+                for(let i=0; i<30; i++) {
+                    const angle = Math.random() * Math.PI; 
+                    const dist = 10 + Math.random() * 25;
+                    const x = Math.cos(angle) * dist;
+                    const z = Math.sin(angle) * dist - 10;
+                    this.createTree(x, 0, z);
+                }
+
+                // 바위 (20개)
+                for(let i=0; i<20; i++) {
+                    const angle = Math.random() * Math.PI + Math.PI; 
+                    const dist = 10 + Math.random() * 25;
+                    const x = Math.cos(angle) * dist;
+                    const z = Math.sin(angle) * dist + 10; 
+                    this.createRock(x, 0, z);
+                }
+                
+                // 물
+                const waterGeo = new THREE.RingGeometry(38, 100, 64);
+                const waterMat = new THREE.MeshPhongMaterial({ color: 0x1E90FF, transparent: true, opacity: 0.6 });
+                const water = new THREE.Mesh(waterGeo, waterMat);
+                water.rotation.x = -Math.PI / 2;
+                water.position.y = -0.5;
+                this.scene.add(water);
+            }
+
+            createBuilding(x, y, z, color) {
+                const geo = new THREE.BoxGeometry(3, 3, 3);
+                const mat = new THREE.MeshLambertMaterial({ color: color });
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.position.set(x, y + 1.5, z);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                this.scene.add(mesh);
+                this.objects.push(mesh);
+            }
+
+            createTree(x, y, z) {
+                const group = new THREE.Group();
+                group.position.set(x, y, z);
+                
+                // 자원 데이터는 그룹에 할당
+                group.userData = { type: 'resource', resource: 'wood' };
+
+                // 줄기
+                const trunkGeo = new THREE.CylinderGeometry(0.3, 0.4, 1.5, 6);
+                const trunkMat = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+                const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+                trunk.position.y = 0.75;
+                trunk.userData = { parent: group }; // 부모 참조
+                group.add(trunk);
+
+                // 잎
+                const leavesGeo = new THREE.ConeGeometry(1.2, 2.5, 8);
+                const leavesMat = new THREE.MeshLambertMaterial({ color: 0x228B22 });
+                const leaves = new THREE.Mesh(leavesGeo, leavesMat);
+                leaves.position.y = 2;
+                leaves.userData = { parent: group }; // 부모 참조
+                group.add(leaves);
+
+                this.scene.add(group);
+                
+                // 물리 충돌체에 두 파트 모두 추가 (어디를 밟아도 채집되도록)
+                this.objects.push(trunk);
+                this.objects.push(leaves);
+            }
+
+            createRock(x, y, z) {
+                const geo = new THREE.DodecahedronGeometry(0.8, 0);
+                const mat = new THREE.MeshLambertMaterial({ color: 0x808080 });
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.position.set(x, y + 0.6, z);
+                mesh.scale.set(1.5, 1, 1.5);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                
+                mesh.userData = { type: 'resource', resource: 'stone', parent: mesh }; // 자기 자신이 부모
+                this.scene.add(mesh);
+                this.objects.push(mesh);
+            }
+
+            createNPC(x, y, z, role, name) {
+                // r128에서 CapsuleGeometry가 없으므로 Cylinder로 대체
+                const geo = new THREE.CylinderGeometry(0.5, 0.5, 1.5, 8);
+                const mat = new THREE.MeshLambertMaterial({ color: role === 'shop' ? 0xFFD700 : 0xFF69B4 });
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.position.set(x, y + 1, z);
+                mesh.castShadow = true;
+                
+                const headGeo = new THREE.SphereGeometry(0.4, 8, 8);
+                const headMat = new THREE.MeshLambertMaterial({ color: 0xFFE0BD });
+                const head = new THREE.Mesh(headGeo, headMat);
+                head.position.y = 0.9;
+                mesh.add(head);
+
+                mesh.userData = { type: 'npc', role: role, name: name };
+                this.scene.add(mesh);
+                this.interactables.push(mesh);
+                this.objects.push(mesh); // NPC도 밟고 올라갈 수 있음
+            }
+
+            setupInputs() {
+                const touchLeft = document.getElementById('touch-left');
+                const touchRight = document.getElementById('touch-right');
+                
+                let joystickId = null;
+                let startX = 0, startY = 0;
+
+                // Joystick
+                touchLeft.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    if(!this.isPlaying || joystickId !== null) return;
+                    const t = e.changedTouches[0];
+                    joystickId = t.identifier;
+                    startX = t.clientX;
+                    startY = t.clientY;
+                    this.joystickBase.style.display = 'block';
+                    this.joystickBase.style.left = startX + 'px';
+                    this.joystickBase.style.top = startY + 'px';
+                    this.joystickKnob.style.transform = `translate(-50%, -50%)`;
+                    this.input.x = 0; this.input.z = 0;
+                }, {passive: false});
+
+                touchLeft.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                    if(!this.isPlaying) return;
+                    for(let i=0; i<e.changedTouches.length; i++) {
+                        if(e.changedTouches[i].identifier === joystickId) {
+                            const t = e.changedTouches[i];
+                            const dx = t.clientX - startX;
+                            const dy = t.clientY - startY;
+                            const dist = Math.sqrt(dx*dx + dy*dy);
+                            const maxDist = 40;
+                            let moveX = dx, moveY = dy;
+                            if(dist > maxDist) {
+                                const angle = Math.atan2(dy, dx);
+                                moveX = Math.cos(angle) * maxDist;
+                                moveY = Math.sin(angle) * maxDist;
+                            }
+                            this.joystickKnob.style.transform = `translate(calc(-50% + ${moveX}px), calc(-50% + ${moveY}px))`;
+                            this.input.x = moveX / maxDist;
+                            this.input.z = moveY / maxDist;
+                            break;
+                        }
+                    }
+                }, {passive: false});
+
+                const endJoystick = (e) => {
+                    e.preventDefault();
+                    for(let i=0; i<e.changedTouches.length; i++) {
+                        if(e.changedTouches[i].identifier === joystickId) {
+                            joystickId = null;
+                            this.joystickBase.style.display = 'none';
+                            this.input.x = 0; this.input.z = 0;
+                            break;
+                        }
+                    }
+                };
+                touchLeft.addEventListener('touchend', endJoystick);
+                touchLeft.addEventListener('touchcancel', endJoystick);
+
+                // Camera
+                let lastCamX = 0, lastCamY = 0;
+                touchRight.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    if(!this.isPlaying) return;
+                    lastCamX = e.changedTouches[0].clientX;
+                    lastCamY = e.changedTouches[0].clientY;
+                }, {passive: false});
+
+                touchRight.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                    if(!this.isPlaying) return;
+                    const t = e.changedTouches[0];
+                    const dx = t.clientX - lastCamX;
+                    const dy = t.clientY - lastCamY;
+                    this.rotateCamera(dx * 2, dy * 2);
+                    lastCamX = t.clientX;
+                    lastCamY = t.clientY;
+                }, {passive: false});
+
+                // PC Controls
+                document.addEventListener('keydown', (e) => {
+                    if(!this.isPlaying) return;
+                    switch(e.key.toLowerCase()) {
+                        case 'w': case 'arrowup': this.input.z = -1; break;
+                        case 's': case 'arrowdown': this.input.z = 1; break;
+                        case 'a': case 'arrowleft': this.input.x = -1; break;
+                        case 'd': case 'arrowright': this.input.x = 1; break;
+                        case 'e': this.interact(); break;
+                    }
+                });
+                document.addEventListener('keyup', (e) => {
+                    switch(e.key.toLowerCase()) {
+                        case 'w': case 's': case 'arrowup': case 'arrowdown': this.input.z = 0; break;
+                        case 'a': case 'd': case 'arrowleft': case 'arrowright': this.input.x = 0; break;
+                    }
+                });
+
+                let isMouseDown = false;
+                document.addEventListener('mousedown', (e) => {
+                    if(!this.isPlaying || e.target.tagName === 'BUTTON') return;
+                    if (!('ontouchstart' in window)) {
+                        isMouseDown = true;
+                        lastCamX = e.clientX;
+                        lastCamY = e.clientY;
+                    }
+                });
+                document.addEventListener('mousemove', (e) => {
+                    if(isMouseDown) {
+                        this.rotateCamera(e.clientX - lastCamX, e.clientY - lastCamY);
+                        lastCamX = e.clientX;
+                        lastCamY = e.clientY;
+                    }
+                });
+                document.addEventListener('mouseup', () => isMouseDown = false);
+            }
+
+            rotateCamera(dx, dy) {
+                const sensitivity = 0.003;
+                this.cameraState.yaw -= dx * sensitivity;
+                this.cameraState.pitch = Math.max(0.1, Math.min(Math.PI/2 - 0.1, this.cameraState.pitch + dy * sensitivity));
+            }
+
+            updatePhysics() {
+                // Gravity
+                this.velocity.y -= this.config.gravity;
+                this.ball.position.add(this.velocity);
+
+                // Move
+                const camAngle = this.cameraState.yaw;
+                const targetVX = (this.input.x * Math.cos(camAngle) + this.input.z * Math.sin(camAngle)) * this.config.moveSpeed;
+                const targetVZ = (this.input.x * -Math.sin(camAngle) + this.input.z * Math.cos(camAngle)) * this.config.moveSpeed;
+                this.velocity.x += (targetVX - this.velocity.x) * 0.1;
+                this.velocity.z += (targetVZ - this.velocity.z) * 0.1;
+
+                // Collision
+                const raycaster = new THREE.Raycaster();
+                raycaster.set(this.ball.position, new THREE.Vector3(0, -1, 0));
+                
+                const intersects = raycaster.intersectObjects(this.objects);
+                let shadowY = -100;
+
+                if (intersects.length > 0) {
+                    const hit = intersects[0];
+                    shadowY = hit.point.y + 0.05;
+
+                    if (hit.distance < this.config.ballRadius && this.velocity.y < 0) {
+                        this.velocity.y = this.config.bounceForce;
+                        this.ball.position.y = hit.point.y + this.config.ballRadius;
+                        
+                        this.ball.scale.set(1.3, 0.7, 1.3);
+                        setTimeout(() => this.ball.scale.set(1, 1, 1), 100);
+                        
+                        // Check Resource
+                        // hit.object might be a child mesh, we need userData from it or its parent
+                        let target = hit.object;
+                        if (!target.userData.type && target.userData.parent) {
+                            target = target.userData.parent;
+                        }
+                        
+                        if (target.userData.type === 'resource') {
+                            this.gatherResource(target, hit.object);
+                        }
                     }
                 }
-            }, { passive: false });
+                
+                this.ballShadow.position.set(this.ball.position.x, shadowY, this.ball.position.z);
+                this.ballShadow.visible = shadowY > -10;
 
-            joystickZone.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                input.x = 0;
-                input.z = 0;
-                joystickKnob.style.transform = `translate(-50%, -50%)`;
-                joystickId = null;
-            });
+                if (this.ball.position.y < -5) {
+                    this.ball.position.set(0, 10, 0);
+                    this.velocity.set(0, 0, 0);
+                    this.showToast("물에 빠져서 마을로 돌아왔습니다.");
+                }
 
-            // 4. 모바일 카메라 (Touch) - cameraZone에만 이벤트 리스너 추가
-            let lastTouchX = 0, lastTouchY = 0;
+                this.checkNPCs();
 
-            cameraZone.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                if (!isPlaying) return;
-                const t = e.changedTouches[0];
-                lastTouchX = t.clientX;
-                lastTouchY = t.clientY;
-            }, { passive: false });
-
-            cameraZone.addEventListener('touchmove', (e) => {
-                e.preventDefault();
-                if (!isPlaying) return;
-                const t = e.changedTouches[0];
-                const dx = t.clientX - lastTouchX;
-                const dy = t.clientY - lastTouchY;
-                rotateCamera(dx * 1.5, dy * 1.5); // 감도 조절
-                lastTouchX = t.clientX;
-                lastTouchY = t.clientY;
-            }, { passive: false });
-        }
-
-        function updateJoystick(touch) {
-            const rect = joystickZone.getBoundingClientRect();
-            let dx = (touch.clientX - rect.left) - rect.width/2;
-            let dy = (touch.clientY - rect.top) - rect.height/2;
-            
-            const dist = Math.sqrt(dx*dx + dy*dy);
-            const maxDist = 50;
-            if (dist > maxDist) {
-                const angle = Math.atan2(dy, dx);
-                dx = Math.cos(angle) * maxDist;
-                dy = Math.sin(angle) * maxDist;
+                this.ball.rotation.x -= this.velocity.z * 1.5;
+                this.ball.rotation.z += this.velocity.x * 1.5;
             }
 
-            joystickKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-            input.x = dx / maxDist;
-            input.z = dy / maxDist;
-        }
+            gatherResource(groupOrMesh, hitMesh) {
+                const type = groupOrMesh.userData.resource;
+                
+                // 파티클
+                this.createExplosion(this.ball.position, type === 'wood' ? 0x8B4513 : 0x808080);
+                this.createFloatingText(this.ball.position, type === 'wood' ? "+1 나무" : "+1 돌");
 
-        function rotateCamera(dx, dy) {
-            const sensitivity = 0.005;
-            cameraState.yaw -= dx * sensitivity;
-            // 상하 각도 제한 (너무 위나 아래로 가지 않게)
-            cameraState.pitch = Math.max(0.1, Math.min(Math.PI / 2 - 0.1, cameraState.pitch + dy * sensitivity));
-        }
+                if (type === 'wood') {
+                    this.resources.wood++;
+                    this.uiWood.innerText = this.resources.wood;
+                } else if (type === 'stone') {
+                    this.resources.stone++;
+                    this.uiStone.innerText = this.resources.stone;
+                }
 
-        // --- 게임 로직 ---
-
-        function startGame() {
-            console.log("Game Starting...");
-            msgScreen.classList.add('hidden');
-            isPlaying = true;
-            loadLevel(currentLevel);
-        }
-
-        function updatePhysics() {
-            // 중력
-            velocity.y -= CONFIG.gravity;
-            ball.position.add(velocity);
-
-            // 입력에 따른 이동 (카메라 기준)
-            const camAngle = cameraState.yaw;
-            const targetVX = (input.x * Math.cos(camAngle) + input.z * Math.sin(camAngle)) * CONFIG.moveSpeed;
-            const targetVZ = (input.x * -Math.sin(camAngle) + input.z * Math.cos(camAngle)) * CONFIG.moveSpeed;
-
-            velocity.x += (targetVX - velocity.x) * 0.1;
-            velocity.z += (targetVZ - velocity.z) * 0.1;
-
-            // 바닥 충돌 체크
-            const raycaster = new THREE.Raycaster();
-            raycaster.set(ball.position, new THREE.Vector3(0, -1, 0));
-            const intersects = raycaster.intersectObjects(platforms);
-
-            let shadowY = -10;
-            if (intersects.length > 0) {
-                const hit = intersects[0];
-                shadowY = hit.point.y + 0.02;
-
-                if (hit.distance < CONFIG.ballRadius && velocity.y < 0) {
-                    const type = hit.object.userData.type;
-                    
-                    if (type === 'trap') {
-                        gameOver();
-                        return;
+                // 일시적으로 제거
+                this.scene.remove(groupOrMesh);
+                
+                // 물리 충돌체 목록에서 제거 (그룹인 경우 자식들을 모두 찾아 제거해야 함)
+                // hitMesh는 실제로 부딪힌 녀석이지만, 나무의 경우 줄기와 잎 모두 제거해야 함.
+                // 편의상 그룹 내부의 모든 메쉬를 objects에서 뺌
+                let childrenToRemove = [];
+                groupOrMesh.traverse((child) => {
+                    if (child.isMesh && this.objects.includes(child)) {
+                        childrenToRemove.push(child);
                     }
-                    
-                    velocity.y = (type === 'jump') ? CONFIG.highBounceForce : CONFIG.bounceForce;
-                    squashBall();
-                    ball.position.y = hit.point.y + CONFIG.ballRadius;
+                });
+                // 만약 groupOrMesh 자체가 메쉬라면
+                if (groupOrMesh.isMesh && this.objects.includes(groupOrMesh)) {
+                    childrenToRemove.push(groupOrMesh);
+                }
+
+                this.objects = this.objects.filter(obj => !childrenToRemove.includes(obj));
+
+                // 리젠
+                setTimeout(() => {
+                    this.scene.add(groupOrMesh);
+                    childrenToRemove.forEach(child => this.objects.push(child));
+                }, 5000);
+            }
+
+            checkNPCs() {
+                let nearNPC = null;
+                for(let obj of this.interactables) {
+                    if(obj.userData.type === 'npc') {
+                        const dist = this.ball.position.distanceTo(obj.position);
+                        if(dist < 3) {
+                            nearNPC = obj;
+                            break;
+                        }
+                    }
+                }
+
+                if(nearNPC !== this.activeNPC) {
+                    this.activeNPC = nearNPC;
+                    if(nearNPC) {
+                        this.interactionText.innerText = nearNPC.userData.name;
+                        this.interactionUI.classList.add('visible');
+                    } else {
+                        this.interactionUI.classList.remove('visible');
+                    }
                 }
             }
 
-            // 그림자 업데이트
-            ballShadow.position.set(ball.position.x, shadowY, ball.position.z);
-            ballShadow.visible = shadowY > -5;
+            interact() {
+                if(!this.activeNPC) return;
+                const data = this.activeNPC.userData;
 
-            // 낙사 체크
-            if (ball.position.y < -5) gameOver();
-
-            // 별 획득
-            for (let i = stars.length - 1; i >= 0; i--) {
-                const s = stars[i];
-                s.rotation.y += 0.05;
-                if (ball.position.distanceTo(s.position) < 0.6) {
-                    scene.remove(s);
-                    stars.splice(i, 1);
-                    starCount++;
-                    updateStarUI();
+                if(data.role === 'shop') {
+                    this.shopModal.style.display = 'block';
+                    this.isPlaying = false;
+                } else {
+                    document.getElementById('dialogue-name').innerText = data.name;
+                    document.getElementById('dialogue-text').innerText = "안녕! 숲과 광산에서 자원을 모아오면 상점에서 좋은 물건으로 바꿔줄게!";
+                    this.dialogueModal.style.display = 'block';
+                    this.isPlaying = false;
                 }
             }
 
-            // 골인 체크
-            if (goal && ball.position.distanceTo(goal.position) < 0.6) {
-                nextLevel();
-            }
-
-            // 공 회전
-            ball.rotation.x -= velocity.z * 1.5;
-            ball.rotation.z += velocity.x * 1.5;
-        }
-
-        function updateCamera() {
-            if (!ball) return;
-            // 구면 좌표계로 카메라 위치 계산
-            const cx = ball.position.x + cameraState.dist * Math.cos(cameraState.pitch) * Math.sin(cameraState.yaw);
-            const cz = ball.position.z + cameraState.dist * Math.cos(cameraState.pitch) * Math.cos(cameraState.yaw);
-            const cy = ball.position.y + cameraState.dist * Math.sin(cameraState.pitch);
-
-            camera.position.set(cx, cy, cz);
-            camera.lookAt(ball.position);
-        }
-
-        function squashBall() {
-            ball.scale.set(1.3, 0.7, 1.3);
-            setTimeout(() => ball.scale.set(1, 1, 1), 100);
-        }
-
-        function nextLevel() {
-            isPlaying = false;
-            currentLevel++;
-            if (!LEVELS[currentLevel]) {
-                msgTitle.innerText = "ALL CLEAR!";
-                msgSub.innerText = "Congratulations!";
-                startBtn.innerText = "Replay";
-                currentLevel = 1;
-            } else {
-                msgTitle.innerText = "LEVEL CLEAR!";
-                msgSub.innerText = "Great Job!";
-                startBtn.innerText = "Next Level";
-            }
-            msgScreen.classList.remove('hidden');
-        }
-
-        function gameOver() {
-            isPlaying = false;
-            msgTitle.innerText = "GAME OVER";
-            msgSub.innerText = "Try Again?";
-            startBtn.innerText = "Retry";
-            msgScreen.classList.remove('hidden');
-        }
-
-        function updateStarUI() {
-            uiStars.innerText = `⭐ ${starCount}/${maxStars}`;
-        }
-
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-
-            if (isPlaying) {
-                updatePhysics();
-                updateCamera();
-            } else {
-                // 대기 화면 애니메이션
-                if (ball) {
-                    ball.position.y = 1 + Math.sin(Date.now() * 0.003) * 0.5;
-                    ball.rotation.y += 0.01;
-                    cameraState.yaw += 0.001; // 대기 중 자동 회전
-                    updateCamera();
+            sellResources() {
+                if(this.resources.wood >= 5 && this.resources.stone >= 5) {
+                    this.resources.wood -= 5;
+                    this.resources.stone -= 5;
+                    this.resources.gold += 10;
+                    this.updateUI();
+                    this.showToast("자원을 팔아 10골드를 얻었습니다!");
+                } else {
+                    this.showToast("나무와 돌이 5개씩 필요합니다.");
                 }
             }
-            renderer.render(scene, camera);
+
+            upgradeJump() {
+                if(this.resources.gold >= 50) {
+                    this.resources.gold -= 50;
+                    this.config.bounceForce += 0.05;
+                    this.updateUI();
+                    this.showToast("점프력이 강화되었습니다!");
+                } else {
+                    this.showToast("골드가 부족합니다.");
+                }
+            }
+
+            upgradeSpeed() {
+                if(this.resources.gold >= 50) {
+                    this.resources.gold -= 50;
+                    this.config.moveSpeed += 0.02;
+                    this.updateUI();
+                    this.showToast("이동속도가 빨라졌습니다!");
+                } else {
+                    this.showToast("골드가 부족합니다.");
+                }
+            }
+
+            closeShop() {
+                this.shopModal.style.display = 'none';
+                this.isPlaying = true;
+                this.input.x = 0; this.input.z = 0;
+            }
+
+            closeDialogue() {
+                this.dialogueModal.style.display = 'none';
+                this.isPlaying = true;
+            }
+
+            updateUI() {
+                this.uiWood.innerText = this.resources.wood;
+                this.uiStone.innerText = this.resources.stone;
+                this.uiGold.innerText = this.resources.gold;
+            }
+
+            showToast(msg) {
+                this.toastEl.innerText = msg;
+                this.toastEl.style.opacity = 1;
+                setTimeout(() => { this.toastEl.style.opacity = 0; }, 2000);
+            }
+
+            createExplosion(pos, color) {
+                const count = 5;
+                for(let i=0; i<count; i++) {
+                    const geo = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+                    const mat = new THREE.MeshBasicMaterial({ color: color });
+                    const mesh = new THREE.Mesh(geo, mat);
+                    mesh.position.copy(pos);
+                    mesh.userData = { 
+                        vel: new THREE.Vector3((Math.random()-0.5)*0.3, Math.random()*0.3, (Math.random()-0.5)*0.3),
+                        life: 1.0 
+                    };
+                    this.scene.add(mesh);
+                    this.particles.push(mesh);
+                }
+            }
+
+            createFloatingText(pos, text) {
+                const div = document.createElement('div');
+                div.className = 'floating-text';
+                div.innerText = text;
+                
+                // 3D 위치를 2D 화면 좌표로 변환
+                const vector = pos.clone();
+                vector.project(this.camera);
+                
+                const x = (vector.x * .5 + .5) * window.innerWidth;
+                const y = (-(vector.y * .5) + .5) * window.innerHeight;
+                
+                div.style.left = `${x}px`;
+                div.style.top = `${y}px`;
+                
+                document.getElementById('ui-layer').appendChild(div);
+                
+                setTimeout(() => div.remove(), 1000);
+            }
+
+            updateParticles() {
+                for(let i=this.particles.length-1; i>=0; i--) {
+                    const p = this.particles[i];
+                    p.position.add(p.userData.vel);
+                    p.userData.life -= 0.05;
+                    p.scale.setScalar(p.userData.life);
+                    if(p.userData.life <= 0) {
+                        this.scene.remove(p);
+                        this.particles.splice(i, 1);
+                    }
+                }
+            }
+
+            updateCamera() {
+                const cx = this.ball.position.x + this.cameraState.dist * Math.cos(this.cameraState.pitch) * Math.sin(this.cameraState.yaw);
+                const cz = this.ball.position.z + this.cameraState.dist * Math.cos(this.cameraState.pitch) * Math.cos(this.cameraState.yaw);
+                const cy = this.ball.position.y + this.cameraState.dist * Math.sin(this.cameraState.pitch);
+
+                this.camera.position.lerp(new THREE.Vector3(cx, cy, cz), 0.1);
+                this.camera.lookAt(this.ball.position);
+            }
+
+            onResize() {
+                this.camera.aspect = window.innerWidth / window.innerHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+
+                if (this.isPlaying) {
+                    this.updatePhysics();
+                    this.updateParticles();
+                } else {
+                    if(this.ball) {
+                        this.ball.position.y = 5 + Math.sin(Date.now() * 0.002) * 0.5;
+                        this.ball.rotation.y += 0.01;
+                    }
+                }
+                
+                if(this.ball) this.updateCamera();
+                this.renderer.render(this.scene, this.camera);
+            }
         }
 
-        // 실행
-        init();
-
+        const game = new Game();
     </script>
 </body>
 </html>
